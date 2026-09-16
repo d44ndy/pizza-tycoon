@@ -148,7 +148,12 @@ for (let t = 0; t < HOURS * 3600; t += STEP) {
 /* Rapport                                                             */
 /* ------------------------------------------------------------------ */
 
-const CIBLES: Record<string, [number, number]> = {
+/**
+ * Repères indicatifs du cahier des charges. Le rythme retenu est celui de
+ * Cookie Clicker (partie longue, sur plusieurs semaines) : ces valeurs sont
+ * affichées pour information, pas comme un verdict.
+ */
+const REPERES: Record<string, [number, number]> = {
   'débloque · Four à plasma orbital': [45 * 60, 90 * 60],
   '1re Étoile (prestige possible)': [30 * 60, 60 * 60],
 };
@@ -159,23 +164,23 @@ const profilClics = CLICK_MINUTES >= HOURS * 60
 console.log(`\n=== Pizza Tycoon — simulation sur ${HOURS} h `
   + `(${profilClics}, pizzas d'or ${CATCH_EVENTS ? 'attrapées' : 'ignorées'}, graine ${SEED}) ===\n`);
 
-console.log('JALON                                     TEMPS        ÉCART AU PRÉCÉDENT   CIBLE');
+console.log('JALON                                     TEMPS        ÉCART AU PRÉCÉDENT   REPÈRE DOC');
 console.log('─'.repeat(96));
 let previous = 0;
 for (const m of milestones.sort((a, b) => a.at - b.at)) {
   const gap = m.at - previous;
   // Un « mur » : un jalon qui prend plus de trois fois le temps du précédent.
   const wall = previous > 60 && gap > previous * 3 ? '  ⚠ MUR' : '';
-  const cible = CIBLES[m.label];
-  const verdict = cible
-    ? (m.at >= cible[0] && m.at <= cible[1] ? '  ✓ dans la cible' : `  ✗ hors cible (${formatTime(cible[0])}–${formatTime(cible[1])})`)
-    : '';
+  const repere = REPERES[m.label];
+  const verdict = repere ? `  (doc : ${formatTime(repere[0])}–${formatTime(repere[1])})` : '';
   console.log(`${m.label.padEnd(42)}${formatTime(m.at).padEnd(13)}${(formatTime(gap) + wall).padEnd(22)}${verdict}`);
   previous = m.at;
 }
 
-for (const [label, [min, max]] of Object.entries(CIBLES)) {
-  if (!seen.has(label)) console.log(`${label.padEnd(42)}${'jamais'.padEnd(13)}${''.padEnd(22)}  ✗ hors cible (${formatTime(min)}–${formatTime(max)})`);
+for (const [label, [min, max]] of Object.entries(REPERES)) {
+  if (!seen.has(label)) {
+    console.log(`${label.padEnd(42)}${'pas atteint'.padEnd(13)}${''.padEnd(22)}  (doc : ${formatTime(min)}–${formatTime(max)})`);
+  }
 }
 
 console.log('\nPROGRESSION');

@@ -108,12 +108,7 @@ export function generatorMultiplier(state: GameState, id: GeneratorId): Decimal 
  * viendront brancher leurs sources ici, sans toucher au tick.
  */
 export function globalMultiplier(state: GameState): Decimal {
-  let mult = achievementMultiplier(state).mul(eventProductionMultiplier(state));
-  for (const upgradeId of Object.keys(state.upgrades)) {
-    const effect = UPGRADES_BY_ID[upgradeId]?.effect;
-    if (effect?.type === 'globalMult') mult = mult.mul(effect.factor);
-  }
-  return mult;
+  return achievementMultiplier(state).mul(eventProductionMultiplier(state));
 }
 
 /** Production d'un générateur, pizzas par seconde, tous multiplicateurs inclus. */

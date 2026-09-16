@@ -26,11 +26,14 @@ describe('catalogue', () => {
     expect(new Set(UPGRADES.map((u) => u.id)).size).toBe(UPGRADES.length);
   });
 
-  it('évite les seuils des paliers de production (pas de saut ×4)', () => {
-    const paliers = new Set([25, 50, 100, 150, 200, 250, 300]);
-    for (const up of UPGRADES) {
-      if (up.unlock.type === 'generatorOwned') expect(paliers.has(up.unlock.count)).toBe(false);
-    }
+  it('utilise les seuils du cahier des charges', () => {
+    // 25, 50 et 100 sont AUSSI des paliers de production : à ces trois seuils, le
+    // joueur encaisse un saut ×4. C'est voulu (c'est le comportement de Cookie Clicker).
+    const seuils = new Set(
+      UPGRADES.filter((u) => u.category === 'generator')
+        .map((u) => (u.unlock.type === 'generatorOwned' ? u.unlock.count : -1)),
+    );
+    expect([...seuils].sort((a, b) => a - b)).toEqual([1, 5, 25, 50, 100]);
   });
 });
 

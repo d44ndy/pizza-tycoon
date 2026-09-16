@@ -50,7 +50,6 @@ export const fr = {
       generator: 'Cuisine',
       click: 'Pétrissage',
       synergy: 'Synergie',
-      recette: 'Recette du chef',
     },
   },
   achievements: {

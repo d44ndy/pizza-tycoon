@@ -2,11 +2,10 @@
  * Les 10 générateurs de « Pizza Tycoon », du garage à l'orbite.
  * `baseCost` = coût du tout premier exemplaire, `baseProduction` = pizzas/s par exemplaire.
  *
- * Table ajustée au simulateur (`npm run sim`). Les valeurs d'origine (celles de
- * Cookie Clicker) faisaient payer 14 à 16 fois le prix de la cuisine précédente pour
- * seulement 5,6 fois sa production : les quatre dernières cuisines devenaient
- * inatteignables dans une première partie. Le rapport est désormais d'environ
- * 10 pour 6,5 sur le haut de la table.
+ * Ces valeurs sont celles du cahier des charges (le barème de Cookie Clicker) :
+ * chaque cuisine coûte 10 à 16 fois la précédente pour 5,5 à 6 fois sa production.
+ * C'est un rythme lent, assumé — le jeu se joue sur plusieurs semaines et ce sont
+ * les prestiges, pas la première partie, qui donnent accès au haut du tableau.
  */
 import { D, type Decimal } from '../engine/decimal.ts';
 
@@ -43,37 +42,37 @@ export const GENERATORS: readonly GeneratorDef[] = [
   {
     id: 'camion', index: 3, name: 'Camion pizza', emoji: '🚚',
     description: "La pizzeria vient au client. Génie.",
-    baseCost: D(12000), baseProduction: D(55),
+    baseCost: D(12000), baseProduction: D(47),
   },
   {
     id: 'pizzeria', index: 4, name: 'Pizzeria de quartier', emoji: '🏪',
     description: "Nappe à carreaux, bougie dans la bouteille, tradition.",
-    baseCost: D(130000), baseProduction: D(320),
+    baseCost: D(130000), baseProduction: D(260),
   },
   {
     id: 'franchise', index: 5, name: 'Franchise', emoji: '🏢',
     description: "Le même goût partout. C'est ça, la modernité.",
-    baseCost: D(1.4e6), baseProduction: D(1900),
+    baseCost: D(1.4e6), baseProduction: D(1400),
   },
   {
     id: 'usine', index: 6, name: 'Usine à pâte', emoji: '🏭',
     description: "Douze tonnes de farine à l'heure. Portez un masque.",
-    baseCost: D(14e6), baseProduction: D(12000),
+    baseCost: D(20e6), baseProduction: D(7800),
   },
   {
     id: 'robot', index: 7, name: 'Robot pizzaïolo', emoji: '🤖',
     description: "Il ne dort jamais et ne se plaint jamais de l'ananas.",
-    baseCost: D(130e6), baseProduction: D(78000),
+    baseCost: D(330e6), baseProduction: D(44000),
   },
   {
     id: 'drone', index: 8, name: 'Drone-livreur orbital', emoji: '🛰️',
     description: "Livraison en 30 minutes, n'importe où sur la planète.",
-    baseCost: D(1.3e9), baseProduction: D(520000),
+    baseCost: D(5.1e9), baseProduction: D(260000),
   },
   {
     id: 'plasma', index: 9, name: 'Four à plasma orbital', emoji: '☀️',
     description: "Cuisson en 0,004 seconde. Croûte parfaite garantie.",
-    baseCost: D(13e9), baseProduction: D(3.4e6),
+    baseCost: D(75e9), baseProduction: D(1.6e6),
   },
 ] as const;
 

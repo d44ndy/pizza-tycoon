@@ -110,24 +110,30 @@ par tick : il passe par `offline.applyElapsed()`. Sauvegarde automatique toutes 
 
 ### Équilibrage
 
-Toutes les valeurs vivent dans `src/data/`. Elles ont été **mesurées, pas devinées** :
+Toutes les valeurs vivent dans `src/data/`. Elles sont celles du cahier des charges,
+c'est-à-dire le barème de Cookie Clicker : **rythme lent, partie qui se joue sur
+plusieurs semaines, choix assumé**. Ce sont les prestiges, pas la première partie,
+qui donnent accès au haut du tableau.
+
 `npm run sim` rejoue le moteur sans interface avec une stratégie gloutonne et affiche
 le temps de chaque jalon, l'écart au jalon précédent et les murs (> 3× le précédent).
+Les repères du doc y sont affichés pour information, sans verdict.
 
-Cibles et résultats actuels (joueur actif, 3 clics/s) :
+Mesures actuelles (joueur actif, 3 clics/s) :
 
-| Jalon | Cible | Mesuré |
-|---|---|---|
-| 1re Étoile (prestige possible) | 30–60 min | 37 min |
-| 10e cuisine débloquée | 45–90 min | 1 h 25 |
+| Jalon | Mesuré |
+|---|---|
+| 1re Étoile (prestige possible) | 56 min |
+| Robot pizzaïolo débloqué (8e) | 1 h 27 |
+| Drone-livreur débloqué (9e) | 3 h 06 |
+| Four à plasma (10e) | hors d'atteinte en première partie, comme prévu |
 
-La table de coûts d'origine (celle de Cookie Clicker) a dû être corrigée : elle faisait
-payer 14 à 16 fois le prix de la cuisine précédente pour 5,6 fois sa production, ce qui
-rendait les quatre dernières cuisines inatteignables en première partie. Le haut du
-tableau est désormais à ~10× le coût pour ~6,5× la production.
-
-La production plafonne vers 3 h 30 de jeu actif, une fois les 74 améliorations achetées :
-c'est le mur que la Phase 3 (prestige) doit débloquer.
+Deux comportements volontaires, qui ne sont pas des bugs :
+- les améliorations de cuisine arrivent à 1, 5, 25, 50 et 100 exemplaires, donc sur les
+  mêmes nombres que les paliers de production (25, 50, 100) : le joueur encaisse un
+  saut ×4 à ces trois seuils, puis un plat plus long ;
+- la production ralentit nettement après ~4 h de jeu actif, une fois l'essentiel des
+  68 améliorations acheté. C'est le mur que le prestige doit débloquer.
 
 ### Sauvegarde
 

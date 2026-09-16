@@ -13,8 +13,6 @@ export function conditionMet(state: GameState, condition: UpgradeCondition): boo
       return state.generators[condition.id].owned >= condition.count;
     case 'clicksTotal':
       return state.stats.clicksTotal >= condition.count;
-    case 'achievementsOwned':
-      return Object.keys(state.achievements).length >= condition.count;
     case 'both':
       return conditionMet(state, condition.a) && conditionMet(state, condition.b);
   }

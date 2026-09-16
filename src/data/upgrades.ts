@@ -8,13 +8,12 @@
 import { D, type Decimal } from '../engine/decimal.ts';
 import { GENERATORS, type GeneratorId } from './generators.ts';
 
-export type UpgradeCategory = 'generator' | 'click' | 'synergy' | 'recette';
+export type UpgradeCategory = 'generator' | 'click' | 'synergy';
 
 /** Condition de déblocage (l'amélioration n'apparaît dans la boutique qu'une fois remplie). */
 export type UpgradeCondition =
   | { readonly type: 'generatorOwned'; readonly id: GeneratorId; readonly count: number }
   | { readonly type: 'clicksTotal'; readonly count: number }
-  | { readonly type: 'achievementsOwned'; readonly count: number }
   | { readonly type: 'both'; readonly a: UpgradeCondition; readonly b: UpgradeCondition };
 
 /** Effet appliqué tant que l'amélioration est possédée. */
@@ -26,9 +25,7 @@ export type UpgradeEffect =
   /** Multiplie la valeur du clic. */
   | { readonly type: 'clickMult'; readonly factor: number }
   /** Le clic rapporte en plus un pourcentage de la production par seconde. */
-  | { readonly type: 'clickFromProduction'; readonly percent: number }
-  /** Multiplie TOUTE la production. */
-  | { readonly type: 'globalMult'; readonly factor: number };
+  | { readonly type: 'clickFromProduction'; readonly percent: number };
 
 export type UpgradeDef = {
   readonly id: string;
@@ -37,7 +34,7 @@ export type UpgradeDef = {
   readonly cost: Decimal;
   readonly category: UpgradeCategory;
   /** Pictogramme à afficher (identifiant de cuisine, ou un picto générique). */
-  readonly icon: GeneratorId | 'click' | 'synergy' | 'recette';
+  readonly icon: GeneratorId | 'click' | 'synergy';
   readonly unlock: UpgradeCondition;
   readonly effect: UpgradeEffect;
 };
@@ -47,15 +44,12 @@ export type UpgradeDef = {
 /* ------------------------------------------------------------------ */
 
 /**
- * Seuils volontairement décalés des paliers de production (25, 50, 100, 150…) :
- * s'ils tombaient sur les mêmes nombres, le joueur encaisserait des sauts ×4 suivis
- * de longs plats. Là, les deux séries s'entrelacent et la courbe reste régulière.
- *
- * Valeurs resserrées après mesure au simulateur : avec 1/10/75/175/275, les deux
- * dernières améliorations de chaque cuisine n'arrivaient jamais dans une première
- * partie, et la courbe de production s'aplatissait après une heure.
+ * Seuils du cahier des charges. Ils tombent volontairement sur les mêmes nombres que
+ * les paliers de production (25, 50, 100) : à ces trois seuils, le joueur encaisse donc
+ * un saut ×4 (palier ×2 et amélioration ×2 le même jour) suivi d'un plat plus long.
+ * C'est le comportement demandé, et c'est aussi celui de Cookie Clicker.
  */
-const UPGRADE_THRESHOLDS = [1, 10, 40, 90, 160] as const;
+const UPGRADE_THRESHOLDS = [1, 5, 25, 50, 100] as const;
 
 /** Coût : 10× le coût de base de la cuisine, puis ×5 à chaque cran. */
 const UPGRADE_COST_FACTORS = [10, 50, 250, 1250, 6250] as const;
@@ -185,54 +179,10 @@ const CLICK_UPGRADES: readonly UpgradeDef[] = [
   },
 ];
 
-/* ------------------------------------------------------------------ */
-/* Les recettes du chef : le second moteur de croissance                */
-/* ------------------------------------------------------------------ */
-
-/**
- * Ces améliorations-là multiplient TOUTE la production et se débloquent au nombre
- * de hauts faits obtenus : elles transforment la collection en véritable progression.
- * Sans elles, la production s'essouffle après une heure (mesuré au simulateur) parce
- * que chaque nouvelle cuisine coûte 10 à 15 fois la précédente pour 6 fois sa production.
- */
-const RECIPE_UPGRADES: readonly UpgradeDef[] = [
-  {
-    id: 'recette-1', name: 'Carnet de recettes', description: 'Toute la production ×1,5',
-    cost: D(60e3), category: 'recette', icon: 'recette',
-    unlock: { type: 'achievementsOwned', count: 10 }, effect: { type: 'globalMult', factor: 1.5 },
-  },
-  {
-    id: 'recette-2', name: 'Tour de main', description: 'Toute la production ×1,5',
-    cost: D(4e6), category: 'recette', icon: 'recette',
-    unlock: { type: 'achievementsOwned', count: 20 }, effect: { type: 'globalMult', factor: 1.5 },
-  },
-  {
-    id: 'recette-3', name: 'Secret de famille', description: 'Toute la production ×2',
-    cost: D(300e6), category: 'recette', icon: 'recette',
-    unlock: { type: 'achievementsOwned', count: 30 }, effect: { type: 'globalMult', factor: 2 },
-  },
-  {
-    id: 'recette-4', name: 'Recette parfaite', description: 'Toute la production ×2',
-    cost: D(40e9), category: 'recette', icon: 'recette',
-    unlock: { type: 'achievementsOwned', count: 45 }, effect: { type: 'globalMult', factor: 2 },
-  },
-  {
-    id: 'recette-5', name: 'Au-delà de la pizza', description: 'Toute la production ×3',
-    cost: D(8e12), category: 'recette', icon: 'recette',
-    unlock: { type: 'achievementsOwned', count: 60 }, effect: { type: 'globalMult', factor: 3 },
-  },
-  {
-    id: 'recette-6', name: 'La pâte originelle', description: 'Toute la production ×3',
-    cost: D(2e15), category: 'recette', icon: 'recette',
-    unlock: { type: 'achievementsOwned', count: 75 }, effect: { type: 'globalMult', factor: 3 },
-  },
-];
-
 export const UPGRADES: readonly UpgradeDef[] = [
   ...generatorUpgrades(),
   ...synergyUpgrades(),
   ...CLICK_UPGRADES,
-  ...RECIPE_UPGRADES,
 ];
 
 export const UPGRADES_BY_ID: Readonly<Record<string, UpgradeDef>> = Object.fromEntries(
