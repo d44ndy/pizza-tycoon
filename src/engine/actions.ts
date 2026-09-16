@@ -5,25 +5,43 @@
 import { ZERO, type Decimal } from './decimal.ts';
 import type { BulkMode, GameState, Settings, TabId } from './state.ts';
 import { GENERATORS_BY_ID, type GeneratorId } from '../data/generators.ts';
-import { clickPower, resolveBulk } from './formulas.ts';
+import { clickPower, resolveBulk, totalProduction } from './formulas.ts';
 import { addPizzas, updateUnlocks } from './tick.ts';
+import { clickPendingEvent, hasBuff, type EventClickResult } from './events.ts';
+import { raiseFlag } from './achievements.ts';
+import { CLICK_BURST_COUNT, CLICK_BURST_WINDOW } from '../data/config.ts';
 
 /** Pétrir la pâte : +1 pizza (multiplicateurs inclus). */
 export function clickDough(state: GameState): GameState {
   const gain = clickPower(state);
-  const next = addPizzas(
-    {
-      ...state,
-      stats: {
-        ...state.stats,
-        clicks: state.stats.clicks + 1,
-        clicksTotal: state.stats.clicksTotal + 1,
-      },
+
+  // Fenêtre glissante de 10 secondes, pour le haut fait « 100 clics en 10 secondes ».
+  const now = state.stats.playTimeTotal;
+  const burst = now - state.events.clickBurst.since > CLICK_BURST_WINDOW
+    ? { count: 1, since: now }
+    : { count: state.events.clickBurst.count + 1, since: state.events.clickBurst.since };
+
+  let next: GameState = {
+    ...state,
+    events: { ...state.events, clickBurst: burst },
+    stats: {
+      ...state.stats,
+      clicks: state.stats.clicks + 1,
+      clicksTotal: state.stats.clicksTotal + 1,
     },
-    gain,
-    true,
-  );
-  return updateUnlocks(next);
+  };
+  if (burst.count >= CLICK_BURST_COUNT) next = raiseFlag(next, 'clickBurst');
+
+  return updateUnlocks(addPizzas(next, gain, true));
+}
+
+/** Attraper la pizza d'or affichée à l'écran. */
+export function catchEvent(state: GameState): EventClickResult {
+  const result = clickPendingEvent(state, totalProduction(state));
+  if (result.gained.gt(0)) {
+    return { ...result, state: updateUnlocks(addPizzas(result.state, result.gained)) };
+  }
+  return result;
 }
 
 export type BuyResult = {
@@ -47,7 +65,7 @@ export function buyGenerator(state: GameState, id: GeneratorId, mode?: BulkMode)
     return { state, bought: 0, spent: ZERO };
   }
 
-  const next: GameState = {
+  let next: GameState = {
     ...state,
     pizzas: state.pizzas.sub(cost),
     generators: {
@@ -55,6 +73,9 @@ export function buyGenerator(state: GameState, id: GeneratorId, mode?: BulkMode)
       [id]: { ...gs, owned: gs.owned + count, totalBought: gs.totalBought + count },
     },
   };
+  // Haut fait caché : profiter d'une frénésie pour investir.
+  if (hasBuff(state, 'frenzy')) next = raiseFlag(next, 'frenzyBuy');
+
   return { state: updateUnlocks(next), bought: count, spent: cost };
 }
 

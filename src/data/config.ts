@@ -23,7 +23,7 @@ export const MAX_CATCHUP_SECONDS = 5;
 /** Sauvegarde. */
 export const SAVE_KEY = 'pizza-tycoon-save';
 export const SAVE_BACKUP_KEY = 'pizza-tycoon-save-corrupted';
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 export const AUTOSAVE_SECONDS = 30;
 
 /** Progression hors ligne (améliorable par l'arbre de prestige en Phase 3). */
@@ -32,6 +32,10 @@ export const OFFLINE_BASE_CAP_SECONDS = 8 * 3600;
 
 /** Valeur de base d'un clic, en pizzas. */
 export const BASE_CLICK_POWER = 1;
+
+/** Haut fait caché : 100 clics en moins de 10 secondes. */
+export const CLICK_BURST_COUNT = 100;
+export const CLICK_BURST_WINDOW = 10;
 
 /**
  * Paliers de production : ×2 à 25, 50, puis tous les 50 exemplaires.

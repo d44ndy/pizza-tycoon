@@ -9,13 +9,15 @@ import { ZERO, type Decimal } from './decimal.ts';
 import { createSeed, type RngState } from './rng.ts';
 import { GENERATORS, type GeneratorId } from '../data/generators.ts';
 import { SAVE_VERSION } from '../data/config.ts';
+import type { EventKind } from '../data/events.ts';
+import type { FlagId } from '../data/achievements.ts';
 import type { Notation } from './format.ts';
 
 /** Quantité achetée d'un coup ; 'max' = tout ce que le stock permet. */
 export type BulkMode = 1 | 10 | 100 | 'max';
 
 /** Onglets de l'interface (les suivants arriveront avec leurs phases respectives). */
-export type TabId = 'game' | 'stats' | 'options';
+export type TabId = 'game' | 'succes' | 'stats' | 'options';
 
 export type GeneratorState = {
   readonly id: GeneratorId;
@@ -44,6 +46,32 @@ export type PrestigeLayerState = {
   nodes: Record<string, number>;
 };
 
+/** Pizza d'or actuellement affichée à l'écran. */
+export type PendingEvent = {
+  readonly kind: EventKind;
+  /** Instant d'apparition, en secondes de jeu. */
+  readonly bornAt: number;
+  /** Position en pourcentage de la zone de jeu. */
+  readonly x: number;
+  readonly y: number;
+};
+
+/** Effet temporaire en cours (bonus de production, frénésie, malus). */
+export type ActiveBuff = {
+  readonly kind: EventKind;
+  /** Fin de l'effet, en secondes de jeu. */
+  readonly endsAt: number;
+};
+
+export type EventsState = {
+  /** Prochaine apparition, en secondes de jeu (0 = pas encore planifiée). */
+  nextSpawnAt: number;
+  pending: PendingEvent | null;
+  buffs: readonly ActiveBuff[];
+  /** Fenêtre glissante pour le haut fait « 100 clics en 10 secondes ». */
+  clickBurst: { count: number; since: number };
+};
+
 export type Stats = {
   /** Horodatage de création de la partie. */
   createdAt: number;
@@ -61,6 +89,8 @@ export type Stats = {
   handmadeTotal: Decimal;
   /** Plus gros stock atteint sur la run. */
   bestPizzas: Decimal;
+  /** Pizzas d'or attrapées, depuis toujours. */
+  eventsClicked: number;
 };
 
 export type Settings = {
@@ -77,6 +107,13 @@ export type GameState = {
   /** Stock de pizzas. */
   pizzas: Decimal;
   generators: Record<GeneratorId, GeneratorState>;
+  /** Améliorations achetées (identifiant -> vrai). */
+  upgrades: Record<string, true>;
+  /** Hauts faits obtenus (identifiant -> instant d'obtention, en secondes de jeu). */
+  achievements: Record<string, number>;
+  /** Faits marquants signalés par le moteur ou l'interface. */
+  flags: Partial<Record<FlagId, true>>;
+  events: EventsState;
   stats: Stats;
   settings: Settings;
   ui: { tab: TabId };
@@ -103,6 +140,15 @@ export function createInitialState(now: number = Date.now(), seed: number = crea
     version: SAVE_VERSION,
     pizzas: ZERO,
     generators,
+    upgrades: {},
+    achievements: {},
+    flags: {},
+    events: {
+      nextSpawnAt: 0,
+      pending: null,
+      buffs: [],
+      clickBurst: { count: 0, since: 0 },
+    },
     stats: {
       createdAt: now,
       playTimeRun: 0,
@@ -114,6 +160,7 @@ export function createInitialState(now: number = Date.now(), seed: number = crea
       earnedTotal: ZERO,
       handmadeTotal: ZERO,
       bestPizzas: ZERO,
+      eventsClicked: 0,
     },
     settings: {
       notation: 'standard',

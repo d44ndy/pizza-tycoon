@@ -8,6 +8,8 @@
 import { D, type Decimal } from './decimal.ts';
 import { createInitialState, type GameState, type GeneratorState, type Settings } from './state.ts';
 import { GENERATORS, type GeneratorId } from '../data/generators.ts';
+import { UPGRADES_BY_ID } from '../data/upgrades.ts';
+import { ACHIEVEMENTS_BY_ID, type FlagId } from '../data/achievements.ts';
 import { SAVE_BACKUP_KEY, SAVE_KEY, SAVE_VERSION } from '../data/config.ts';
 
 /** Format sérialisé (les Decimal deviennent des chaînes). */
@@ -18,6 +20,13 @@ export type SaveData = {
   version: number;
   pizzas: string;
   generators: Partial<Record<GeneratorId, SavedGenerator>>;
+  /** Améliorations achetées, sous forme de liste d'identifiants (plus compact). */
+  upgrades: string[];
+  /** Hauts faits obtenus : identifiant -> instant d'obtention. */
+  achievements: Record<string, number>;
+  flags: string[];
+  /** Prochaine pizza d'or, en secondes de jeu. Les effets en cours ne sont pas sauvegardés. */
+  nextEventAt: number;
   stats: {
     createdAt: number;
     playTimeRun: number;
@@ -29,6 +38,7 @@ export type SaveData = {
     earnedTotal: string;
     handmadeTotal: string;
     bestPizzas: string;
+    eventsClicked: number;
   };
   settings: Settings;
   prestige: { layers: Record<string, SavedLayer> };
@@ -41,7 +51,16 @@ export type SaveData = {
  * Elles sont appliquées en chaîne au chargement. (Aucune nécessaire pour l'instant.)
  */
 const MIGRATIONS: Record<number, (save: SaveData) => SaveData> = {
-  // 1: (save) => ({ ...save, version: 2, /* nouveaux champs */ }),
+  // v1 (Phase 1) -> v2 (Phase 2) : arrivée des améliorations, hauts faits et pizzas d'or.
+  1: (save) => ({
+    ...save,
+    version: 2,
+    upgrades: [],
+    achievements: {},
+    flags: [],
+    nextEventAt: 0,
+    stats: { ...save.stats, eventsClicked: 0 },
+  }),
 };
 
 /* ------------------------------------------------------------------ */
@@ -70,6 +89,10 @@ export function toSaveData(state: GameState, now: number = Date.now()): SaveData
     version: SAVE_VERSION,
     pizzas: state.pizzas.toString(),
     generators,
+    upgrades: Object.keys(state.upgrades),
+    achievements: { ...state.achievements },
+    flags: Object.keys(state.flags),
+    nextEventAt: state.events.nextSpawnAt,
     stats: {
       createdAt: state.stats.createdAt,
       playTimeRun: state.stats.playTimeRun,
@@ -81,6 +104,7 @@ export function toSaveData(state: GameState, now: number = Date.now()): SaveData
       earnedTotal: state.stats.earnedTotal.toString(),
       handmadeTotal: state.stats.handmadeTotal.toString(),
       bestPizzas: state.stats.bestPizzas.toString(),
+      eventsClicked: state.stats.eventsClicked,
     },
     settings: { ...state.settings },
     prestige: { layers },
@@ -154,12 +178,34 @@ export function fromSaveData(raw: unknown): GameState {
     generators[def.id] = gen;
   }
 
+  // On ignore silencieusement les identifiants inconnus : une sauvegarde d'une version
+  // où une amélioration existait encore ne doit pas empêcher de charger la partie.
+  const upgrades: Record<string, true> = {};
+  for (const id of Array.isArray(migrated.upgrades) ? migrated.upgrades : []) {
+    if (UPGRADES_BY_ID[id]) upgrades[id] = true;
+  }
+  const achievements: Record<string, number> = {};
+  for (const [id, at] of Object.entries(migrated.achievements ?? {})) {
+    if (ACHIEVEMENTS_BY_ID[id]) achievements[id] = num(at, 0);
+  }
+  const flags: Partial<Record<FlagId, true>> = {};
+  for (const flag of Array.isArray(migrated.flags) ? migrated.flags : []) {
+    flags[flag as FlagId] = true;
+  }
+
   const s = migrated.stats;
   const state: GameState = {
     ...base,
     version: SAVE_VERSION,
     pizzas: dec(migrated.pizzas),
     generators,
+    upgrades,
+    achievements,
+    flags,
+    events: {
+      ...base.events,
+      nextSpawnAt: Math.max(0, num(migrated.nextEventAt, 0)),
+    },
     stats: {
       createdAt: num(s?.createdAt, base.stats.createdAt),
       playTimeRun: Math.max(0, num(s?.playTimeRun, 0)),
@@ -171,6 +217,7 @@ export function fromSaveData(raw: unknown): GameState {
       earnedTotal: dec(s?.earnedTotal),
       handmadeTotal: dec(s?.handmadeTotal),
       bestPizzas: dec(s?.bestPizzas),
+      eventsClicked: Math.max(0, num(s?.eventsClicked, 0)),
     },
     settings: {
       notation: migrated.settings?.notation ?? base.settings.notation,

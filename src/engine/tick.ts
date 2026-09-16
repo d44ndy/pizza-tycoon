@@ -8,8 +8,11 @@
 import type { Decimal } from './decimal.ts';
 import type { GameState } from './state.ts';
 import { totalProduction, shouldUnlock } from './formulas.ts';
+import { checkAchievements } from './achievements.ts';
+import { updateEvents } from './events.ts';
 import { GENERATORS } from '../data/generators.ts';
 import { TICK_SECONDS } from '../data/config.ts';
+import type { AchievementDef } from '../data/achievements.ts';
 
 /**
  * Crédite des pizzas et met à jour les compteurs de gains.
@@ -48,11 +51,19 @@ export function updateUnlocks(state: GameState): GameState {
   return changed ? { ...state, generators } : state;
 }
 
-/** Avance la simulation de `dt` secondes. */
-export function tick(state: GameState, dt: number): GameState {
+/**
+ * Avance la simulation de `dt` secondes.
+ * `onAchievement` permet à l'interface d'afficher une notification sans que
+ * le moteur ait à connaître React (il reste pur : c'est un simple rappel).
+ */
+export function tick(
+  state: GameState,
+  dt: number,
+  onAchievement?: (achievements: AchievementDef[]) => void,
+): GameState {
   if (!Number.isFinite(dt) || dt <= 0) return state;
 
-  const produced = totalProduction(state).mul(dt);
+  const production = totalProduction(state);
 
   let next: GameState = {
     ...state,
@@ -62,9 +73,13 @@ export function tick(state: GameState, dt: number): GameState {
       playTimeTotal: state.stats.playTimeTotal + dt,
     },
   };
-  next = addPizzas(next, produced);
+  next = addPizzas(next, production.mul(dt));
   next = updateUnlocks(next);
-  return next;
+  next = updateEvents(next);
+
+  const checked = checkAchievements(next, production);
+  if (checked.unlocked.length > 0 && onAchievement) onAchievement(checked.unlocked);
+  return checked.state;
 }
 
 /**

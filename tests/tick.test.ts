@@ -4,6 +4,7 @@ import { createTestState, type GameState } from '../src/engine/state.ts';
 import { runFor, tick } from '../src/engine/tick.ts';
 import { buyGenerator, clickDough } from '../src/engine/actions.ts';
 import { totalProduction } from '../src/engine/formulas.ts';
+import { checkAchievements } from '../src/engine/achievements.ts';
 
 /** État de départ : 10 apprentis (1 pizza/s) et un peu de monnaie. */
 function stateWithProduction(): GameState {
@@ -33,8 +34,13 @@ describe('tick', () => {
   });
 
   it('ne dépend pas du découpage du temps', () => {
-    const gros = tick(stateWithProduction(), 10);
-    const fin = runFor(stateWithProduction(), 10, 0.05);
+    // Précision : l'invariance ne vaut que si aucun seuil n'est franchi pendant la fenêtre.
+    // Un haut fait débloqué en cours de route multiplie la production pour les ticks
+    // suivants — c'est voulu, mais ça fausserait la comparaison. On laisse donc les hauts
+    // faits déjà acquis se stabiliser avant de comparer.
+    const settled = checkAchievements(stateWithProduction(), totalProduction(stateWithProduction())).state;
+    const gros = tick(settled, 10);
+    const fin = runFor(settled, 10, 0.05);
     const ecart = Math.abs(fin.pizzas.toNumber() / gros.pizzas.toNumber() - 1);
     expect(ecart).toBeLessThan(1e-9);
   });

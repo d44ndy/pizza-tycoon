@@ -6,6 +6,9 @@ import { D, ONE, ZERO, type Decimal } from './decimal.ts';
 import type { GameState } from './state.ts';
 import type { BulkMode } from './state.ts';
 import { GENERATORS, GENERATORS_BY_ID, type GeneratorDef, type GeneratorId } from '../data/generators.ts';
+import { UPGRADES_BY_ID } from '../data/upgrades.ts';
+import { achievementMultiplier } from './achievements.ts';
+import { eventClickMultiplier, eventProductionMultiplier } from './events.ts';
 import {
   BASE_CLICK_POWER, COST_GROWTH, MILESTONE_MULTIPLIER, UNLOCK_RATIO,
   milestonesReached, nextMilestone, previousMilestone,
@@ -77,20 +80,40 @@ export function resolveBulk(
   return { count: bulkMode, cost, affordable: money.gte(cost) };
 }
 
-/** Multiplicateur propre à un générateur : paliers (×2 à 25, 50, 100, 150…). */
+/**
+ * Multiplicateur propre à un générateur :
+ * paliers (×2 à 25, 50, 100, 150…) × améliorations dédiées × synergies.
+ */
 export function generatorMultiplier(state: GameState, id: GeneratorId): Decimal {
   const owned = state.generators[id].owned;
-  return powFast(MILESTONE_MULTIPLIER, milestonesReached(owned));
-  // Phase 2 : × upgrades du générateur, × synergies.
+  let mult = powFast(MILESTONE_MULTIPLIER, milestonesReached(owned));
+
+  // Un seul parcours des améliorations possédées : générateur ×2 et synergies.
+  let synergyBonus = 0;
+  for (const upgradeId of Object.keys(state.upgrades)) {
+    const effect = UPGRADES_BY_ID[upgradeId]?.effect;
+    if (!effect) continue;
+    if (effect.type === 'generatorMult' && effect.target === id) {
+      mult = mult.mul(effect.factor);
+    } else if (effect.type === 'synergy' && effect.target === id) {
+      synergyBonus += (effect.perUnit / 100) * state.generators[effect.source].owned;
+    }
+  }
+  return synergyBonus > 0 ? mult.mul(1 + synergyBonus) : mult;
 }
 
 /**
  * Multiplicateur global, appliqué à TOUTE la production.
- * Pipeline unique : les phases suivantes (succès, Étoiles de prestige, défis)
+ * Pipeline unique : les phases suivantes (Étoiles de prestige, défis)
  * viendront brancher leurs sources ici, sans toucher au tick.
  */
-export function globalMultiplier(_state: GameState): Decimal {
-  return ONE;
+export function globalMultiplier(state: GameState): Decimal {
+  let mult = achievementMultiplier(state).mul(eventProductionMultiplier(state));
+  for (const upgradeId of Object.keys(state.upgrades)) {
+    const effect = UPGRADES_BY_ID[upgradeId]?.effect;
+    if (effect?.type === 'globalMult') mult = mult.mul(effect.factor);
+  }
+  return mult;
 }
 
 /** Production d'un générateur, pizzas par seconde, tous multiplicateurs inclus. */
@@ -113,9 +136,27 @@ export function totalProduction(state: GameState): Decimal {
   return total;
 }
 
-/** Valeur d'un clic (Phase 2 : + un pourcentage de la production/s). */
+/**
+ * Valeur d'un clic : une base multipliée (améliorations de clic, frénésie, hauts faits),
+ * à laquelle s'ajoute un pourcentage de la production par seconde.
+ */
 export function clickPower(state: GameState): Decimal {
-  return D(BASE_CLICK_POWER).mul(globalMultiplier(state));
+  let mult = ONE;
+  let productionPercent = 0;
+  for (const upgradeId of Object.keys(state.upgrades)) {
+    const effect = UPGRADES_BY_ID[upgradeId]?.effect;
+    if (!effect) continue;
+    if (effect.type === 'clickMult') mult = mult.mul(effect.factor);
+    else if (effect.type === 'clickFromProduction') productionPercent += effect.percent;
+  }
+
+  const base = D(BASE_CLICK_POWER)
+    .mul(mult)
+    .mul(globalMultiplier(state))
+    .mul(eventClickMultiplier(state));
+
+  if (productionPercent === 0) return base;
+  return base.add(totalProduction(state).mul(productionPercent / 100));
 }
 
 /** Un générateur devient visible quand le joueur possède 50 % de son coût actuel. */
