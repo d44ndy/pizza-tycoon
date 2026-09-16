@@ -1,0 +1,58 @@
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+
+.tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 9px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-dim);
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.tab[data-active='true'] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.icon {
+  font-size: 15px;
+}
+
+/* Mobile : barre d'onglets fixée en bas de l'écran. */
+@media (max-width: 899px) {
+  .tabs {
+    position: fixed;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    z-index: 30;
+    box-shadow: var(--shadow);
+    background: var(--bg-panel);
+  }
+
+  .tab {
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 4px;
+  }
+
+  .icon {
+    font-size: 18px;
+  }
+
+  .label {
+    font-size: 11px;
+  }
+}

@@ -1,0 +1,37 @@
+.anchor {
+  position: relative;
+  display: inline-flex;
+}
+
+.trigger {
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-faint);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.trigger:hover {
+  color: var(--accent);
+}
+
+.bubble {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 6px);
+  right: 0;
+  width: max-content;
+  max-width: 240px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  text-align: left;
+  white-space: normal;
+  pointer-events: none;
+}

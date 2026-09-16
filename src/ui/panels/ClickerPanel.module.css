@@ -1,0 +1,93 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 20px 16px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.counter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.amount {
+  font-size: clamp(28px, 6vw, 40px);
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.unit {
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+.rate {
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.clickZone {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.bigButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 24px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 50% 30%, var(--accent-soft), transparent 70%);
+  transition: transform 0.08s ease-out;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bigButton:hover .pizza {
+  transform: scale(1.05) rotate(-4deg);
+}
+
+.bigButton:active {
+  transform: scale(0.96);
+}
+
+.pizza {
+  font-size: clamp(80px, 22vw, 120px);
+  line-height: 1;
+  display: block;
+  transition: transform 0.12s ease-out;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.35));
+}
+
+.label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-faint);
+  text-align: center;
+  animation: blink 2.2s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}

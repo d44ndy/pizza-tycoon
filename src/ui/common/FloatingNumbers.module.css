@@ -1,0 +1,32 @@
+.layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.pop {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--gold);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  animation: rise 0.9s ease-out forwards;
+  white-space: nowrap;
+}
+
+@keyframes rise {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -60%) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -160%) scale(1);
+  }
+}

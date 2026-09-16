@@ -1,0 +1,103 @@
+.row {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-panel);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.row[data-affordable='true'] {
+  border-color: var(--accent);
+  background: linear-gradient(90deg, var(--accent-soft), transparent 60%), var(--bg-panel);
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  text-align: left;
+  border-radius: 12px;
+  transition: transform 0.08s ease-out;
+}
+
+.main:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.main:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.main:disabled {
+  opacity: 0.55;
+}
+
+.emoji {
+  font-size: 30px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.titleLine {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.name {
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.owned {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+
+.costLine {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.count {
+  color: var(--text-faint);
+}
+
+.boost {
+  color: var(--green);
+  font-weight: 600;
+}
+
+.tooltip {
+  display: flex;
+  align-items: flex-start;
+  padding: 8px 8px 0 0;
+}
+
+.tipDesc {
+  color: var(--text-faint);
+  font-style: italic;
+  margin: 4px 0;
+}

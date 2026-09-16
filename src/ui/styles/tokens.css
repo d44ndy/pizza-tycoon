@@ -1,0 +1,107 @@
+/*
+ * Thème et styles globaux.
+ * Toutes les couleurs passent par des variables CSS : le thème clair se contente
+ * de les redéfinir sur `:root[data-theme="light"]`, et les composants n'ont rien à savoir.
+ */
+
+:root,
+:root[data-theme='dark'] {
+  --bg: #15100d;
+  --bg-elevated: #1e1713;
+  --bg-panel: #241c17;
+  --bg-hover: #2f251e;
+  --border: #3a2d24;
+  --text: #f6ece2;
+  --text-dim: #b8a596;
+  --text-faint: #7d6d61;
+  --accent: #ff8a3d;
+  --accent-strong: #ff6b1a;
+  --accent-soft: rgba(255, 138, 61, 0.15);
+  --gold: #ffcc4d;
+  --green: #6fcf7f;
+  --red: #e5634d;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme='light'] {
+  --bg: #fdf6ef;
+  --bg-elevated: #fffaf4;
+  --bg-panel: #ffffff;
+  --bg-hover: #f6ebdf;
+  --border: #e6d6c4;
+  --text: #2c1f16;
+  --text-dim: #6d5a4a;
+  --text-faint: #9c8875;
+  --accent: #e2661a;
+  --accent-strong: #c9530c;
+  --accent-soft: rgba(226, 102, 26, 0.12);
+  --gold: #d99b00;
+  --green: #2f9e44;
+  --red: #c92a2a;
+  --shadow: 0 8px 24px rgba(120, 80, 40, 0.15);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+#root {
+  min-height: 100%;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* Le joueur peut couper les animations (option), tout comme son système. */
+:root[data-reduced-motion='true'] *,
+:root[data-reduced-motion='true'] *::before,
+:root[data-reduced-motion='true'] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+/* Barres de défilement discrètes */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
