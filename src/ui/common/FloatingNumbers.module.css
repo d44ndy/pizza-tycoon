@@ -8,25 +8,17 @@
 .pop {
   position: absolute;
   transform: translate(-50%, -50%);
-  font-weight: 700;
+  font-family: 'Alfa Slab One', Georgia, serif;
   font-size: 18px;
-  color: var(--gold);
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  color: var(--card);
+  -webkit-text-stroke: 3px var(--line);
+  paint-order: stroke fill;
   animation: rise 0.9s ease-out forwards;
   white-space: nowrap;
 }
 
 @keyframes rise {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.8);
-  }
-  15% {
-    opacity: 1;
-    transform: translate(-50%, -60%) scale(1.1);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -160%) scale(1);
-  }
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.85) rotate(-6deg); }
+  18% { opacity: 1; transform: translate(-50%, -64%) scale(1.08) rotate(-3deg); }
+  100% { opacity: 0; transform: translate(-50%, -165%) scale(1) rotate(-1deg); }
 }

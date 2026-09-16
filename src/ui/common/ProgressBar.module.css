@@ -7,26 +7,29 @@
 .legend {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
-  color: var(--text-faint);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
 }
 
 .value {
-  color: var(--text-dim);
   font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
 }
 
 .track {
-  height: 5px;
-  border-radius: 3px;
-  background: var(--border);
+  height: 7px;
+  background: var(--card-alt);
+  border: 2px solid var(--line);
+  border-radius: 2px;
   overflow: hidden;
 }
 
 .fill {
   height: 100%;
   width: calc(var(--ratio) * 100%);
-  background: linear-gradient(90deg, var(--accent), var(--gold));
-  border-radius: 3px;
-  transition: width 0.2s ease-out;
+  background: var(--tom);
+  transition: width 0.2s steps(6);
 }

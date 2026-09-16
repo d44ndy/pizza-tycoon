@@ -1,44 +1,58 @@
 /*
- * Thème et styles globaux.
- * Toutes les couleurs passent par des variables CSS : le thème clair se contente
- * de les redéfinir sur `:root[data-theme="light"]`, et les composants n'ont rien à savoir.
+ * Direction visuelle « Carton & tampon » : l'interface est imprimée sur une boîte à pizza.
+ *
+ * Trois règles qui tiennent tout le style :
+ *   1. aucun dégradé, aucune ombre floue — les ombres sont DURES et décalées, comme une
+ *      encre mal calée à l'impression ;
+ *   2. des bordures franches de 2 px et des angles vifs (rayon 2 px maximum) ;
+ *   3. les chiffres sont toujours tabulaires, pour que les compteurs ne dansent pas.
+ *
+ * Le thème sombre reprend le même carton, la nuit : ce sont les mêmes tokens, redéfinis.
  */
 
 :root,
-:root[data-theme='dark'] {
-  --bg: #15100d;
-  --bg-elevated: #1e1713;
-  --bg-panel: #241c17;
-  --bg-hover: #2f251e;
-  --border: #3a2d24;
-  --text: #f6ece2;
-  --text-dim: #b8a596;
-  --text-faint: #7d6d61;
-  --accent: #ff8a3d;
-  --accent-strong: #ff6b1a;
-  --accent-soft: rgba(255, 138, 61, 0.15);
-  --gold: #ffcc4d;
-  --green: #6fcf7f;
-  --red: #e5634d;
-  --shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+:root[data-theme='light'] {
+  --paper: #e9dcc3;
+  --card: #f4ecdb;
+  --card-alt: #ecdfc7;
+  --ink: #2d2118;
+  --dim: #6d5b49;
+  --faint: #96826c;
+  --line: #2d2118;
+  --line-soft: #c9b593;
+  --tom: #b8372a;
+  --tom-ink: #fdf6ea;
+  --bas: #4d7a3a;
+  --gold: #a8761a;
+  --shadow: 3px 3px 0 var(--line);
+  --shadow-sm: 2px 2px 0 var(--line);
+  --dots: rgba(45, 33, 24, 0.09);
+  --crust: #e7c288;
+  --sauce: #c0442f;
+  --topping: #8f2a20;
+  --herb: #4d7a3a;
 }
 
-:root[data-theme='light'] {
-  --bg: #fdf6ef;
-  --bg-elevated: #fffaf4;
-  --bg-panel: #ffffff;
-  --bg-hover: #f6ebdf;
-  --border: #e6d6c4;
-  --text: #2c1f16;
-  --text-dim: #6d5a4a;
-  --text-faint: #9c8875;
-  --accent: #e2661a;
-  --accent-strong: #c9530c;
-  --accent-soft: rgba(226, 102, 26, 0.12);
-  --gold: #d99b00;
-  --green: #2f9e44;
-  --red: #c92a2a;
-  --shadow: 0 8px 24px rgba(120, 80, 40, 0.15);
+:root[data-theme='dark'] {
+  --paper: #1b140e;
+  --card: #251c14;
+  --card-alt: #2e2319;
+  --ink: #f0e3cc;
+  --dim: #ac9781;
+  --faint: #7f6d59;
+  --line: #4d3a28;
+  --line-soft: #3a2c20;
+  --tom: #e2634a;
+  --tom-ink: #1b140e;
+  --bas: #86b366;
+  --gold: #dfae55;
+  --shadow: 3px 3px 0 #100b07;
+  --shadow-sm: 2px 2px 0 #100b07;
+  --dots: rgba(240, 227, 204, 0.05);
+  --crust: #d3aa6a;
+  --sauce: #b23f2c;
+  --topping: #7d241b;
+  --herb: #5f9440;
 }
 
 * {
@@ -49,13 +63,16 @@ html,
 body {
   margin: 0;
   padding: 0;
-  height: 100%;
+  min-height: 100%;
 }
 
 body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+  background-color: var(--paper);
+  /* Trame de demi-teinte : la texture du carton imprimé. */
+  background-image: radial-gradient(var(--dots) 1px, transparent 1px);
+  background-size: 7px 7px;
+  color: var(--ink);
+  font-family: 'Archivo Variable', Archivo, system-ui, sans-serif;
   font-size: 15px;
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
@@ -66,16 +83,30 @@ body {
   min-height: 100%;
 }
 
+h1, h2, h3 {
+  font-family: 'Alfa Slab One', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  margin: 0;
+}
+
 button {
   font: inherit;
   color: inherit;
   cursor: pointer;
   border: none;
   background: none;
+  font-family: inherit;
 }
 
 button:disabled {
   cursor: not-allowed;
+}
+
+/* Tous les chiffres du jeu sont tabulaires : les compteurs ne doivent pas trembler. */
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
 }
 
 /* Le joueur peut couper les animations (option), tout comme son système. */
@@ -97,11 +128,16 @@ button:disabled {
 }
 
 ::selection {
-  background: var(--accent-soft);
+  background: var(--tom);
+  color: var(--tom-ink);
 }
 
-/* Barres de défilement discrètes */
+:focus-visible {
+  outline: 2px solid var(--tom);
+  outline-offset: 2px;
+}
+
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
+  scrollbar-color: var(--line-soft) transparent;
 }

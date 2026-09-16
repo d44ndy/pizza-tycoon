@@ -1,0 +1,31 @@
+.bar {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.buff {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--tom-ink);
+  background: var(--bas);
+  border: 2px solid var(--line);
+  border-radius: 2px;
+  box-shadow: var(--shadow-sm);
+}
+
+.buff[data-negative='true'] {
+  background: var(--tom);
+}
+
+.time {
+  font-weight: 700;
+  opacity: 0.85;
+}

@@ -2,6 +2,11 @@
 import { t } from '../../data/i18n/fr.ts';
 import { GENERATORS } from '../../data/generators.ts';
 import { formatTime } from '../../engine/format.ts';
+import { clickPower } from '../../engine/formulas.ts';
+import { achievementMultiplier, achievementsOwnedCount } from '../../engine/achievements.ts';
+import { upgradesOwnedCount } from '../../engine/upgrades.ts';
+import { ACHIEVEMENTS } from '../../data/achievements.ts';
+import { UPGRADES } from '../../data/upgrades.ts';
 import { useGameStore } from '../../store/gameStore.ts';
 import { useFormat } from '../useFormat.ts';
 import styles from './StatsPanel.module.css';
@@ -15,7 +20,12 @@ export function StatsPanel() {
 
   const rows: Array<[string, string]> = [
     [t.stats.production, `${fmt(production)} ${t.game.currency}${t.game.perSecond}`],
+    [t.stats.clickPower, fmt(clickPower(state))],
     [t.stats.generatorsOwned, fmtInt(owned)],
+    [t.stats.upgradesOwned, `${fmtInt(upgradesOwnedCount(state))} / ${UPGRADES.length}`],
+    [t.stats.achievementsOwned, `${fmtInt(achievementsOwnedCount(state))} / ${ACHIEVEMENTS.length}`],
+    [t.stats.achievementBonus, `×${achievementMultiplier(state).toNumber().toFixed(2)}`],
+    [t.stats.eventsClicked, fmtInt(state.stats.eventsClicked)],
     [t.stats.earnedRun, fmt(state.stats.earnedRun)],
     [t.stats.earnedTotal, fmt(state.stats.earnedTotal)],
     [t.stats.best, fmt(state.stats.bestPizzas)],

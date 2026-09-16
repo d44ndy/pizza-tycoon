@@ -1,5 +1,5 @@
 /**
- * Colonne de gauche : stock, production et le gros bouton « Pétrir la pâte ».
+ * Colonne de gauche : le compteur et la pizza sur laquelle on tape.
  * C'est le seul élément visible au tout premier lancement (révélation progressive).
  */
 import { useRef, useState, type MouseEvent } from 'react';
@@ -8,6 +8,7 @@ import { clickPower } from '../../engine/formulas.ts';
 import { doClick } from '../../store/gameLoop.ts';
 import { useGameStore } from '../../store/gameStore.ts';
 import { FloatingNumbers, type Pop } from '../common/FloatingNumbers.tsx';
+import { PizzaMark } from '../icons/PizzaMark.tsx';
 import { useFormat } from '../useFormat.ts';
 import styles from './ClickerPanel.module.css';
 
@@ -20,41 +21,49 @@ export function ClickerPanel() {
   const [pops, setPops] = useState<readonly Pop[]>([]);
   const nextId = useRef(0);
 
-  const hasStarted = state.stats.clicks > 0 || pizzas.gt(0);
+  const hasStarted = state.stats.clicksTotal > 0 || pizzas.gt(0);
 
   function handleClick(event: MouseEvent<HTMLButtonElement>) {
     const gain = clickPower(state);
     doClick();
 
-    // Position du chiffre flottant, en % du bouton, là où le joueur a cliqué.
     const rect = event.currentTarget.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
     const id = nextId.current++;
-    setPops((list) => [...list, { id, text: `+${fmt(gain)}`, x, y }]);
+    setPops((list) => [
+      ...list,
+      {
+        id,
+        text: `+${fmt(gain)}`,
+        x: ((event.clientX - rect.left) / rect.width) * 100,
+        y: ((event.clientY - rect.top) / rect.height) * 100,
+      },
+    ]);
   }
 
   return (
     <section className={styles.panel}>
       <div className={styles.counter}>
-        <span className={styles.amount}>{fmt(pizzas)}</span>
+        <span className={`${styles.amount} num`}>{fmt(pizzas)}</span>
         <span className={styles.unit}>{pizzas.eq(1) ? t.game.currencyOne : t.game.currency}</span>
-        {production.gt(0) && (
-          <span className={styles.rate}>
-            {fmt(production)} {t.game.currency}
-            {t.game.perSecond}
-          </span>
-        )}
       </div>
 
+      {production.gt(0) && (
+        <div className={styles.rateBox}>
+          <span className={styles.rateLabel}>{t.game.production}</span>
+          <span className={`${styles.rate} num`}>
+            {fmt(production)} {t.game.perSecond}
+          </span>
+        </div>
+      )}
+
       <div className={styles.clickZone}>
-        <button type="button" className={styles.bigButton} onClick={handleClick}>
-          <span className={styles.pizza}>🍕</span>
-          <span className={styles.label}>{t.game.clickButton}</span>
+        <button type="button" className={styles.pizzaButton} onClick={handleClick} aria-label={t.game.clickButton}>
+          <PizzaMark className={styles.pizza} />
         </button>
         <FloatingNumbers pops={pops} onDone={(id) => setPops((list) => list.filter((p) => p.id !== id))} />
       </div>
 
+      <div className={styles.action}>{t.game.clickButton}</div>
       {!hasStarted && <p className={styles.hint}>{t.game.clickHint}</p>}
     </section>
   );

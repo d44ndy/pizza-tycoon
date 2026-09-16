@@ -1,4 +1,4 @@
-/** Une ligne de générateur : achat, paliers, infobulle détaillée. */
+/** Une ligne de cuisine : achat, palier, infobulle détaillée. */
 import { t } from '../../data/i18n/fr.ts';
 import type { GeneratorDef } from '../../data/generators.ts';
 import { milestonesReached } from '../../data/config.ts';
@@ -9,6 +9,7 @@ import { doBuy } from '../../store/gameLoop.ts';
 import { useGameStore } from '../../store/gameStore.ts';
 import { ProgressBar } from '../common/ProgressBar.tsx';
 import { Tooltip } from '../common/Tooltip.tsx';
+import { Picto } from '../icons/Picto.tsx';
 import { useFormat } from '../useFormat.ts';
 import styles from './GeneratorRow.module.css';
 
@@ -21,9 +22,7 @@ export function GeneratorRow({ def }: Props) {
   const gs = state.generators[def.id];
   const bulk = resolveBulk(def, gs.owned, state.pizzas, state.settings.bulkMode);
   const progress = milestoneProgress(gs.owned);
-  // Production d'UN exemplaire : utile aussi quand le joueur n'en possède encore aucun.
   const unitProduction = def.baseProduction.mul(generatorMultiplier(state, def.id));
-  const share = productionShare(state, def.id);
   const multiplier = Math.pow(2, milestonesReached(gs.owned));
 
   return (
@@ -33,19 +32,20 @@ export function GeneratorRow({ def }: Props) {
         className={styles.main}
         onClick={() => doBuy(def.id)}
         disabled={!bulk.affordable}
-        title={bulk.affordable ? `${t.generators.buy} ×${bulk.count}` : t.generators.cantAfford}
       >
-        <span className={styles.emoji}>{def.emoji}</span>
+        <span className={styles.picto}>
+          <Picto name={def.id} size={30} />
+        </span>
 
         <span className={styles.body}>
           <span className={styles.titleLine}>
             <span className={styles.name}>{def.name}</span>
-            {gs.owned > 0 && <span className={styles.owned}>×{fmtInt(gs.owned)}</span>}
+            {gs.owned > 0 && <span className={`${styles.owned} num`}>{fmtInt(gs.owned)}</span>}
           </span>
 
           <span className={styles.costLine}>
-            <span className={styles.cost}>🍕 {fmt(bulk.cost)}</span>
-            <span className={styles.count}>
+            <span className={`${styles.cost} num`}>{fmt(bulk.cost)}</span>
+            <span className={`${styles.count} num`}>
               +{fmtInt(bulk.count)}
               {multiplier > 1 && <span className={styles.boost}> ×{multiplier}</span>}
             </span>
@@ -61,31 +61,31 @@ export function GeneratorRow({ def }: Props) {
         </span>
       </button>
 
-      <span className={styles.tooltip}>
+      <span className={styles.info}>
         <Tooltip
           content={
             <>
-              <strong>{def.name}</strong>
+              <strong className={styles.tipName}>{def.name}</strong>
               <div className={styles.tipDesc}>{def.description}</div>
               <div>
-                {t.generators.tooltipUnit} : {fmt(unitProduction)}
-                {t.game.perSecond}
+                {t.generators.tooltipUnit} : <span className="num">{fmt(unitProduction)}{t.game.perSecond}</span>
               </div>
               <div>
-                {t.generators.tooltipTotal} : {fmt(generatorProduction(state, def.id))}
-                {t.game.perSecond}
+                {t.generators.tooltipTotal} :{' '}
+                <span className="num">{fmt(generatorProduction(state, def.id))}{t.game.perSecond}</span>
               </div>
               <div>
-                {t.generators.tooltipShare} : {(share * 100).toFixed(1)} %
+                {t.generators.tooltipShare} :{' '}
+                <span className="num">{(productionShare(state, def.id) * 100).toFixed(1)} %</span>
               </div>
               <div>
-                {t.generators.tooltipMultiplier} : ×{multiplier}
+                {t.generators.tooltipMultiplier} : <span className="num">×{multiplier}</span>
               </div>
               <div className={styles.tipDesc}>{t.generators.milestoneHint(progress.to)}</div>
             </>
           }
         >
-          ℹ️
+          i
         </Tooltip>
       </span>
     </div>

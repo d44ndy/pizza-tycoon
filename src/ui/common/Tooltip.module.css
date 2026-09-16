@@ -4,34 +4,68 @@
 }
 
 .trigger {
+  width: 18px;
+  height: 18px;
   padding: 0;
   display: inline-flex;
   align-items: center;
-  color: var(--text-faint);
-  font-size: 13px;
+  justify-content: center;
+  border: 2px solid var(--line-soft);
+  border-radius: 50%;
+  color: var(--dim);
+  font-family: 'Alfa Slab One', Georgia, serif;
+  font-size: 10px;
   line-height: 1;
 }
 
-.trigger:hover {
-  color: var(--accent);
+.trigger:hover,
+.trigger[aria-expanded='true'] {
+  color: var(--tom-ink);
+  background: var(--tom);
+  border-color: var(--line);
+}
+
+.triggerPlain {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--line-soft);
+  border-radius: 2px;
+  background: var(--card-alt);
+  color: var(--bas);
+}
+
+.triggerPlain:hover,
+.triggerPlain[aria-expanded='true'] {
+  border-color: var(--line);
+  background: var(--card);
 }
 
 .bubble {
   position: absolute;
   z-index: 40;
-  top: calc(100% + 6px);
+  top: calc(100% + 7px);
   right: 0;
   width: max-content;
-  max-width: 240px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--bg-elevated);
+  max-width: 250px;
+  padding: 9px 11px;
+  border: 2px solid var(--line);
+  border-radius: 2px;
+  background: var(--card);
   box-shadow: var(--shadow);
   font-size: 12px;
-  line-height: 1.5;
-  color: var(--text-dim);
+  line-height: 1.55;
+  color: var(--dim);
   text-align: left;
   white-space: normal;
   pointer-events: none;
+}
+
+.bubbleLeft {
+  composes: bubble;
+  right: auto;
+  left: 0;
 }

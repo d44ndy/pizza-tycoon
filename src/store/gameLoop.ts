@@ -9,7 +9,7 @@
  * - Sauvegarde automatique toutes les 30 s, plus au `beforeunload` et quand l'onglet est caché.
  */
 import {
-  AUTOSAVE_SECONDS, MAX_CATCHUP_SECONDS, TICK_SECONDS, UI_REFRESH_MS,
+  AUTOSAVE_SECONDS, MAX_CATCHUP_SECONDS, OFFLINE_BASE_CAP_SECONDS, TICK_SECONDS, UI_REFRESH_MS,
 } from '../data/config.ts';
 import type { GeneratorId } from '../data/generators.ts';
 import { totalProduction } from '../engine/formulas.ts';
@@ -17,8 +17,24 @@ import { applyElapsed, applyOffline, OFFLINE_MIN_SECONDS } from '../engine/offli
 import { createInitialState, type GameState } from '../engine/state.ts';
 import { clearStorage, exportSave, importSave, loadFromStorage, saveToStorage } from '../engine/save.ts';
 import { tick } from '../engine/tick.ts';
-import { buyGenerator, clickDough } from '../engine/actions.ts';
+import { buyGenerator, catchEvent, clickDough } from '../engine/actions.ts';
+import { buyUpgrade } from '../engine/upgrades.ts';
+import { raiseFlag } from '../engine/achievements.ts';
+import { clearBuffs } from '../engine/events.ts';
+import type { FlagId } from '../data/achievements.ts';
+import type { EventKind } from '../data/events.ts';
+import type { AchievementDef } from '../data/achievements.ts';
+import type { Decimal } from '../engine/decimal.ts';
+import { t } from '../data/i18n/fr.ts';
 import { useGameStore } from './gameStore.ts';
+
+/** Noms affichés des pizzas d'or (le moteur, lui, ne connaît que leur type). */
+const EVENT_NAMES: Record<EventKind, string> = {
+  bonus: 'Livraison de mozzarella',
+  frenzy: 'Coup de feu',
+  jackpot: 'Pourboire du siècle',
+  malus: "Contrôle d'hygiène",
+};
 
 /** État de jeu courant : vit ICI, hors de React, pour ne pas re-rendre 20 fois par seconde. */
 let current: GameState = createInitialState();
@@ -58,6 +74,24 @@ export function doBuy(id: GeneratorId): void {
   dispatch((state) => buyGenerator(state, id).state);
 }
 
+export function doBuyUpgrade(id: string): void {
+  dispatch((state) => buyUpgrade(state, id).state);
+}
+
+/** Attrape la pizza d'or affichée ; renvoie le gain immédiat éventuel. */
+export function doCatchEvent(): { gained: Decimal; name: string } | null {
+  const result = catchEvent(current);
+  if (!result.kind) return null;
+  current = result.state;
+  publish();
+  return { gained: result.gained, name: EVENT_NAMES[result.kind] };
+}
+
+/** Déclenche un fait marquant depuis l'interface (œuf de Pâques, horloge système…). */
+export function doRaiseFlag(flag: FlagId): void {
+  dispatch((state) => raiseFlag(state, flag));
+}
+
 export function saveNow(): void {
   const now = Date.now();
   saveToStorage(current, now);
@@ -73,7 +107,7 @@ export function exportCurrent(): string {
 export function importFrom(text: string): void {
   const imported = importSave(text);
   const result = applyOffline(imported, Date.now());
-  current = result.state;
+  current = afterOffline(result.state, result.elapsedSeconds);
   if (result.elapsedSeconds >= OFFLINE_MIN_SECONDS && result.gained.gt(0)) {
     useGameStore.getState().setOffline(result);
   }
@@ -93,6 +127,21 @@ export function hardReset(): void {
 /* Boucle                                                              */
 /* ------------------------------------------------------------------ */
 
+/** Notifie l'interface des hauts faits fraîchement obtenus. */
+function announce(unlocked: AchievementDef[]): void {
+  const store = useGameStore.getState();
+  for (const def of unlocked) {
+    store.pushToast({ kind: 'achievement', title: t.achievements.toast, text: def.name });
+  }
+}
+
+/** Haut fait caché : jouer entre 3 h et 4 h du matin (l'heure système, pas le temps de jeu). */
+function checkWallClock(): void {
+  if (new Date().getHours() === 3 && current.flags.nightOwl !== true) {
+    current = raiseFlag(current, 'nightOwl');
+  }
+}
+
 function frame(nowMs: number): void {
   const dt = (nowMs - lastFrameMs) / 1000;
   lastFrameMs = nowMs;
@@ -100,7 +149,7 @@ function frame(nowMs: number): void {
   if (dt > MAX_CATCHUP_SECONDS) {
     // Onglet endormi / machine en veille : on ne rejoue pas des milliers de ticks.
     const result = applyElapsed(current, dt, Date.now());
-    current = result.state;
+    current = afterOffline(result.state, result.elapsedSeconds);
     accumulator = 0;
     if (result.elapsedSeconds >= OFFLINE_MIN_SECONDS && result.gained.gt(0)) {
       useGameStore.getState().setOffline(result);
@@ -109,14 +158,17 @@ function frame(nowMs: number): void {
     accumulator += dt;
     let steps = 0;
     while (accumulator >= TICK_SECONDS && steps < 240) {
-      current = tick(current, TICK_SECONDS);
+      current = tick(current, TICK_SECONDS, announce);
       accumulator -= TICK_SECONDS;
       steps++;
     }
   }
 
   sinceSaveSeconds += Math.max(0, dt);
-  if (sinceSaveSeconds >= AUTOSAVE_SECONDS) saveNow();
+  if (sinceSaveSeconds >= AUTOSAVE_SECONDS) {
+    saveNow();
+    checkWallClock();
+  }
 
   if (nowMs - lastPublishMs >= UI_REFRESH_MS) publish();
 
@@ -131,7 +183,7 @@ export function startLoop(): () => void {
   const loaded = loadFromStorage();
   if (loaded.status === 'ok') {
     const result = applyOffline(loaded.state, Date.now());
-    current = result.state;
+    current = afterOffline(result.state, result.elapsedSeconds);
     if (result.elapsedSeconds >= OFFLINE_MIN_SECONDS && result.gained.gt(0)) {
       store.setOffline(result);
     }
@@ -150,6 +202,15 @@ export function startLoop(): () => void {
   document.addEventListener('visibilitychange', onVisibilityChange);
   rafId = requestAnimationFrame(frame);
   return stopLoop;
+}
+
+/**
+ * Retour d'absence : les effets en cours sont purgés (un bonus ×7 « gelé » toute la
+ * nuit n'aurait aucun sens) et l'absence longue débloque son haut fait caché.
+ */
+function afterOffline(state: GameState, elapsedSeconds: number): GameState {
+  const cleaned = clearBuffs(state);
+  return elapsedSeconds >= OFFLINE_BASE_CAP_SECONDS ? raiseFlag(cleaned, 'coldPizza') : cleaned;
 }
 
 function onVisibilityChange(): void {

@@ -1,0 +1,88 @@
+.pizza {
+  position: fixed;
+  z-index: 60;
+  transform: translate(-50%, -50%);
+  padding: 4px;
+  line-height: 0;
+  filter: drop-shadow(3px 3px 0 var(--line));
+  animation: pop 0.25s steps(3) both, float 2.6s ease-in-out 0.25s infinite;
+}
+
+.pizza:hover {
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
+.pizza:active {
+  transform: translate(-50%, -50%) scale(0.94);
+}
+
+.mark {
+  display: block;
+}
+
+/* Une pizza d'or : dorée, elle scintille. */
+.pizza[data-kind='bonus'] .mark,
+.pizza[data-kind='frenzy'] .mark,
+.pizza[data-kind='jackpot'] .mark {
+  --crust: var(--gold);
+  --sauce: #e0a93c;
+  --topping: #a8761a;
+  --herb: #8a6414;
+}
+
+/* Le contrôle d'hygiène : brûlé, gris, franchement peu appétissant. */
+.pizza[data-kind='malus'] .mark {
+  --crust: #6b6259;
+  --sauce: #4a443d;
+  --topping: #2e2a25;
+  --herb: #555049;
+}
+
+.timer {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: -2px;
+  height: 5px;
+  border: 2px solid var(--line);
+  border-radius: 2px;
+  background: var(--card);
+  overflow: hidden;
+}
+
+.timer::after {
+  content: '';
+  display: block;
+  height: 100%;
+  width: calc(var(--left) * 100%);
+  background: var(--tom);
+}
+
+.caught {
+  position: fixed;
+  z-index: 60;
+  transform: translate(-50%, -50%);
+  font-family: 'Alfa Slab One', Georgia, serif;
+  font-size: 20px;
+  color: var(--gold);
+  -webkit-text-stroke: 3px var(--line);
+  paint-order: stroke fill;
+  pointer-events: none;
+  animation: rise 1.4s ease-out forwards;
+  white-space: nowrap;
+}
+
+@keyframes pop {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.3) rotate(-25deg); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+}
+
+@keyframes float {
+  0%, 100% { margin-top: 0; }
+  50% { margin-top: -7px; }
+}
+
+@keyframes rise {
+  0% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -150%); }
+}

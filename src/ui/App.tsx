@@ -1,19 +1,25 @@
 /**
  * Composant racine : démarre la boucle de jeu, applique le thème et assemble les panneaux.
  *
- * Révélation progressive : au tout premier lancement, seul le bouton de clic est visible.
- * Les onglets, la liste des cuisines et la colonne des améliorations apparaissent
+ * Révélation progressive : au tout premier lancement, seule la pizza est visible.
+ * Les cuisines, les améliorations, les onglets et la collection apparaissent
  * au fur et à mesure que le joueur débloque le contenu correspondant.
  */
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { t } from '../data/i18n/fr.ts';
 import { GENERATORS } from '../data/generators.ts';
 import { formatTime } from '../engine/format.ts';
 import { OFFLINE_BASE_EFFICIENCY } from '../data/config.ts';
-import { startLoop } from '../store/gameLoop.ts';
+import { availableUpgrades, upgradesOwnedCount } from '../engine/upgrades.ts';
+import { achievementsOwnedCount } from '../engine/achievements.ts';
+import { doRaiseFlag, startLoop } from '../store/gameLoop.ts';
 import { useGameStore } from '../store/gameStore.ts';
 import { Tabs } from './Tabs.tsx';
+import { BuffBar } from './common/BuffBar.tsx';
+import { GoldenPizza } from './common/GoldenPizza.tsx';
 import { Modal } from './common/Modal.tsx';
+import { Toasts } from './common/Toasts.tsx';
+import { AchievementsPanel } from './panels/AchievementsPanel.tsx';
 import { ClickerPanel } from './panels/ClickerPanel.tsx';
 import { GeneratorList } from './panels/GeneratorList.tsx';
 import { OptionsPanel } from './panels/OptionsPanel.tsx';
@@ -23,10 +29,9 @@ import { useFormat } from './useFormat.ts';
 import styles from './App.module.css';
 
 export function App() {
-  const tab = useGameStore((s) => s.state.ui.tab);
+  const state = useGameStore((s) => s.state);
   const theme = useGameStore((s) => s.state.settings.theme);
   const reducedMotion = useGameStore((s) => s.state.settings.reducedMotion);
-  const generators = useGameStore((s) => s.state.generators);
   const offline = useGameStore((s) => s.offline);
   const corrupted = useGameStore((s) => s.corrupted);
   const toast = useGameStore((s) => s.toast);
@@ -45,31 +50,46 @@ export function App() {
     document.documentElement.dataset.reducedMotion = String(reducedMotion);
   }, [reducedMotion]);
 
-  const anyUnlocked = GENERATORS.some((def) => generators[def.id].unlocked);
+  const tab = state.ui.tab;
+  const anyGenerator = GENERATORS.some((def) => state.generators[def.id].unlocked);
+  const anyUpgrade = upgradesOwnedCount(state) > 0 || availableUpgrades(state).length > 0;
+  const anyAchievement = achievementsOwnedCount(state) > 0;
+
+  // Œuf de Pâques : insister sur le sujet qui fâche.
+  const titleClicks = useRef(0);
+  function pokeTitle() {
+    titleClicks.current += 1;
+    if (titleClicks.current >= 10) doRaiseFlag('pineapple');
+  }
 
   return (
     <div className={styles.app}>
       <header className={styles.brand}>
         <h1 className={styles.logo}>
-          <span aria-hidden="true">🍕</span> {t.game.title}
+          <button type="button" className={styles.logoButton} onClick={pokeTitle}>
+            {t.game.title}
+          </button>
         </h1>
+        <BuffBar />
       </header>
 
-      {anyUnlocked && (
+      {anyGenerator && (
         <div className={styles.nav}>
-          <Tabs />
+          <Tabs showAchievements={anyAchievement} />
         </div>
       )}
 
       {tab === 'game' && (
-        <main className={styles.layout}>
+        <main className={styles.layout} data-columns={anyGenerator ? (anyUpgrade ? 3 : 2) : 1}>
           <div className={styles.left}>
             <ClickerPanel />
           </div>
-          <div className={styles.center}>
-            <GeneratorList />
-          </div>
-          {anyUnlocked && (
+          {anyGenerator && (
+            <div className={styles.center}>
+              <GeneratorList />
+            </div>
+          )}
+          {anyUpgrade && (
             <div className={styles.right}>
               <UpgradesPanel />
             </div>
@@ -77,19 +97,13 @@ export function App() {
         </main>
       )}
 
-      {tab === 'stats' && (
-        <main className={styles.single}>
-          <StatsPanel />
-        </main>
-      )}
+      {tab === 'succes' && <main className={styles.single}><AchievementsPanel /></main>}
+      {tab === 'stats' && <main className={styles.single}><StatsPanel /></main>}
+      {tab === 'options' && <main className={styles.single}><OptionsPanel /></main>}
 
-      {tab === 'options' && (
-        <main className={styles.single}>
-          <OptionsPanel />
-        </main>
-      )}
-
-      {toast && <div className={styles.toast}>{toast}</div>}
+      <GoldenPizza />
+      <Toasts />
+      {toast && <div className={styles.flash}>{toast}</div>}
 
       {offline && (
         <Modal title={t.offline.title} actionLabel={t.offline.close} onAction={() => setOffline(null)}>

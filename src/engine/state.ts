@@ -165,7 +165,7 @@ export function createInitialState(now: number = Date.now(), seed: number = crea
     settings: {
       notation: 'standard',
       bulkMode: 1,
-      theme: 'dark',
+      theme: 'light',
       reducedMotion: false,
       sound: false,
     },

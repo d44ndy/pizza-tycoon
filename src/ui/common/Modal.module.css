@@ -6,32 +6,32 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(2px);
-  animation: fade 0.18s ease-out;
+  background: rgba(20, 14, 9, 0.62);
+  animation: fade 0.18s steps(2);
 }
 
 .box {
-  width: min(420px, 100%);
+  width: min(430px, 100%);
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding: 22px;
-  border-radius: 16px;
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: 2px;
+  box-shadow: 6px 6px 0 var(--line);
   text-align: center;
 }
 
 .title {
-  margin: 0;
   font-size: 19px;
+  text-transform: uppercase;
+  color: var(--tom);
 }
 
 .content {
-  font-size: 14px;
-  color: var(--text-dim);
+  font-size: 13.5px;
+  color: var(--dim);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -39,15 +39,25 @@
 
 .action {
   align-self: center;
-  padding: 10px 22px;
-  border-radius: 10px;
-  background: var(--accent);
-  color: #1a1008;
-  font-weight: 700;
+  padding: 9px 22px;
+  background: var(--ink);
+  color: var(--paper);
+  border: 2px solid var(--line);
+  border-radius: 2px;
+  font-family: 'Alfa Slab One', Georgia, serif;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: var(--shadow-sm);
 }
 
 .action:hover {
-  background: var(--accent-strong);
+  background: var(--tom);
+}
+
+.action:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
 }
 
 @keyframes fade {
