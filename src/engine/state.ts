@@ -17,7 +17,7 @@ import type { Notation } from './format.ts';
 export type BulkMode = 1 | 10 | 100 | 'max';
 
 /** Onglets de l'interface (les suivants arriveront avec leurs phases respectives). */
-export type TabId = 'game' | 'succes' | 'stats' | 'options';
+export type TabId = 'game' | 'succes' | 'prestige' | 'stats' | 'options';
 
 export type GeneratorState = {
   readonly id: GeneratorId;
@@ -72,6 +72,18 @@ export type EventsState = {
   clickBurst: { count: number; since: number };
 };
 
+/**
+ * Accumulateurs de l'automatisation (arbre de prestige).
+ * Volontairement HORS sauvegarde : ce sont des restes de fraction de seconde,
+ * les recharger n'aurait aucun sens.
+ */
+export type AutomationState = {
+  /** Fraction de clic automatique en attente. */
+  clickCredit: number;
+  /** Secondes restantes avant la prochaine passe d'achat automatique. */
+  buyCooldown: number;
+};
+
 export type Stats = {
   /** Horodatage de création de la partie. */
   createdAt: number;
@@ -114,6 +126,7 @@ export type GameState = {
   /** Faits marquants signalés par le moteur ou l'interface. */
   flags: Partial<Record<FlagId, true>>;
   events: EventsState;
+  automation: AutomationState;
   stats: Stats;
   settings: Settings;
   ui: { tab: TabId };
@@ -149,6 +162,7 @@ export function createInitialState(now: number = Date.now(), seed: number = crea
       buffs: [],
       clickBurst: { count: 0, since: 0 },
     },
+    automation: { clickCredit: 0, buyCooldown: 0 },
     stats: {
       createdAt: now,
       playTimeRun: 0,

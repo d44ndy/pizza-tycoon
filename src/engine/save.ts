@@ -10,6 +10,8 @@ import { createInitialState, type GameState, type GeneratorState, type Settings 
 import { GENERATORS, type GeneratorId } from '../data/generators.ts';
 import { UPGRADES_BY_ID } from '../data/upgrades.ts';
 import { ACHIEVEMENTS_BY_ID, type FlagId } from '../data/achievements.ts';
+import { PRESTIGE_NODES_BY_ID } from '../data/prestige.ts';
+import type { PrestigeLayerId, PrestigeLayerState } from './state.ts';
 import { SAVE_BACKUP_KEY, SAVE_KEY, SAVE_VERSION } from '../data/config.ts';
 
 /** Format sérialisé (les Decimal deviennent des chaînes). */
@@ -193,6 +195,22 @@ export function fromSaveData(raw: unknown): GameState {
     flags[flag as FlagId] = true;
   }
 
+  // Couches de prestige : les identifiants de nœuds inconnus sont ignorés.
+  const layers: Partial<Record<PrestigeLayerId, PrestigeLayerState>> = {};
+  for (const [id, saved] of Object.entries(migrated.prestige?.layers ?? {})) {
+    if (id !== 'recipe' && id !== 'expansion') continue;
+    const nodes: Record<string, number> = {};
+    for (const [nodeId, level] of Object.entries(saved?.nodes ?? {})) {
+      if (PRESTIGE_NODES_BY_ID[nodeId]) nodes[nodeId] = Math.max(1, Math.floor(num(level, 1)));
+    }
+    layers[id] = {
+      currency: dec(saved?.currency),
+      totalEarned: dec(saved?.totalEarned),
+      resets: Math.max(0, Math.floor(num(saved?.resets, 0))),
+      nodes,
+    };
+  }
+
   const s = migrated.stats;
   const state: GameState = {
     ...base,
@@ -226,7 +244,7 @@ export function fromSaveData(raw: unknown): GameState {
       reducedMotion: bool(migrated.settings?.reducedMotion, base.settings.reducedMotion),
       sound: bool(migrated.settings?.sound, base.settings.sound),
     },
-    prestige: { layers: {} },
+    prestige: { layers },
     rng: { seed: num(migrated.rng?.seed, base.rng.seed) },
     lastSaved: num(migrated.lastSaved, Date.now()),
   };

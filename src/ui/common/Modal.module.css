@@ -37,8 +37,30 @@
   gap: 8px;
 }
 
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.cancel {
+  padding: 9px 18px;
+  background: var(--card-alt);
+  border: 2px solid var(--line);
+  border-radius: 2px;
+  font-weight: 700;
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+}
+
+.cancel:hover {
+  color: var(--ink);
+}
+
 .action {
-  align-self: center;
   padding: 9px 22px;
   background: var(--ink);
   color: var(--paper);

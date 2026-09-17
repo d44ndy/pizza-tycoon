@@ -17,6 +17,10 @@ import { costOfNext, totalProduction } from '../src/engine/formulas.ts';
 import { buyGenerator, catchEvent, clickDough } from '../src/engine/actions.ts';
 import { availableUpgrades, buyUpgrade, upgradesOwnedCount } from '../src/engine/upgrades.ts';
 import { achievementsOwnedCount } from '../src/engine/achievements.ts';
+import {
+  buyNode, canBuyNode, doPrestige, pendingStars, recipeLayer,
+} from '../src/engine/prestige.ts';
+import { PRESTIGE_TREE } from '../src/data/prestige.ts';
 import { tick } from '../src/engine/tick.ts';
 import { format, formatTime } from '../src/engine/format.ts';
 
@@ -36,8 +40,11 @@ const CLICKS_PER_SECOND = arg('clicks', 3);
 /** Le joueur ne clique que pendant les N premières minutes (profil « idle »). */
 const CLICK_MINUTES = arg('click-minutes', HOURS * 60);
 const CATCH_EVENTS = !process.argv.includes('--no-events');
+/** Le joueur prestige dès que le gain double son stock d'Étoiles (règle du cahier des charges). */
+const PRESTIGE = !process.argv.includes('--no-prestige');
 const SEED = arg('seed', 20260916);
-const STEP = 1; // seconde
+/** Pas de simulation. 1 s est fidèle ; 5 s permet de simuler plusieurs jours rapidement. */
+const STEP = arg('step', 1);
 
 /* ------------------------------------------------------------------ */
 /* Stratégie gloutonne                                                 */
@@ -110,36 +117,75 @@ function record(label: string, at: number): void {
   milestones.push({ label, at });
 }
 
-/** Étoiles de prestige disponibles : floor(cbrt(pizzas cumulées / 1e9)). */
+/** Étoiles en banque (dépensables). */
 function stars(state: GameState): number {
-  return Math.floor(Math.cbrt(state.stats.earnedTotal.div(1e9).toNumber()));
+  return recipeLayer(state).currency.toNumber();
+}
+
+/** Achète les nœuds d'arbre abordables, les moins chers d'abord. */
+function spendStars(state: GameState): GameState {
+  let current = state;
+  for (let guard = 0; guard < 30; guard++) {
+    const candidates = PRESTIGE_TREE
+      .filter((node) => canBuyNode(current, node))
+      .sort((a, b) => a.cost - b.cost);
+    const cheapest = candidates[0];
+    if (!cheapest) return current;
+    current = buyNode(current, cheapest.id).state;
+  }
+  return current;
+}
+
+/**
+ * Règle de prestige : on recommence dès que le gain double les Étoiles en banque
+ * (et au moins 1 Étoile au premier passage).
+ */
+function shouldPrestige(state: GameState): boolean {
+  const gain = pendingStars(state);
+  if (gain.lt(1)) return false;
+  // On compare au TOTAL d'Étoiles déjà gagnées, pas à la banque : sinon, comme
+  // l'arbre vide la banque, la règle dégénère en « prestige dès la première Étoile ».
+  const earned = recipeLayer(state).totalEarned;
+  return earned.lte(0) ? gain.gte(1) : gain.gte(earned);
 }
 
 let state = createInitialState(0, SEED);
-const timeline: Array<{ t: number; prod: Decimal; total: Decimal; ach: number; up: number }> = [];
+const timeline: Array<{
+  t: number; prod: Decimal; total: Decimal; ach: number; up: number; etoiles: number; noeuds: number;
+}> = [];
 
 for (let t = 0; t < HOURS * 3600; t += STEP) {
   if (t < CLICK_MINUTES * 60) {
-    for (let c = 0; c < CLICKS_PER_SECOND; c++) state = clickDough(state);
+    for (let c = 0; c < CLICKS_PER_SECOND * STEP; c++) state = clickDough(state);
   }
   if (CATCH_EVENTS && state.events.pending) state = catchEvent(state).state;
   state = tick(state, STEP);
   state = spend(state);
 
+  if (pendingStars(state).gte(1)) record('1re Étoile (prestige possible)', t);
+
+  if (PRESTIGE && shouldPrestige(state)) {
+    const before = recipeLayer(state).resets;
+    state = doPrestige(state).state;
+    state = spendStars(state);
+    record(`prestige n°${before + 1}`, t);
+  }
+
   for (const def of GENERATORS) {
     if (state.generators[def.id].unlocked) record(`débloque · ${def.name}`, t);
     if (state.generators[def.id].owned > 0) record(`achète · ${def.name}`, t);
   }
-  const s = stars(state);
-  if (s >= 1) record('1re Étoile (prestige possible)', t);
-  if (s >= 5) record('5 Étoiles', t);
-  if (s >= 10) record('10 Étoiles', t);
-  if (s >= 50) record('50 Étoiles', t);
+  const banque = recipeLayer(state).totalEarned.toNumber();
+  if (banque >= 5) record('5 Étoiles gagnées', t);
+  if (banque >= 50) record('50 Étoiles gagnées', t);
+  if (banque >= 500) record('500 Étoiles gagnées', t);
 
-  if (t % 1800 === 0) {
+  if (t % 1800 < STEP) {
     timeline.push({
       t, prod: totalProduction(state), total: state.stats.earnedTotal,
       ach: achievementsOwnedCount(state), up: upgradesOwnedCount(state),
+      etoiles: recipeLayer(state).currency.toNumber(),
+      noeuds: Object.keys(recipeLayer(state).nodes).length,
     });
   }
 }
@@ -184,15 +230,17 @@ for (const [label, [min, max]] of Object.entries(REPERES)) {
 }
 
 console.log('\nPROGRESSION');
-console.log('TEMPS        PRODUCTION/S        CUMUL              HAUTS FAITS   AMÉLIORATIONS');
+console.log('TEMPS        PRODUCTION/S        CUMUL              HAUTS FAITS   AMÉLIOR.   ÉTOILES   NŒUDS');
 console.log('─'.repeat(96));
 for (const row of timeline) {
   console.log(
     `${formatTime(row.t).padEnd(13)}${format(row.prod).padEnd(20)}${format(row.total).padEnd(19)}`
-    + `${String(row.ach).padEnd(14)}${row.up}`,
+    + `${String(row.ach).padEnd(14)}${String(row.up).padEnd(11)}${String(row.etoiles).padEnd(10)}${row.noeuds}`,
   );
 }
 
 console.log(`\nÉtat final : ${format(state.pizzas)} pizzas en stock, ${format(totalProduction(state))}/s, `
-  + `${stars(state)} Étoiles, ${achievementsOwnedCount(state)} hauts faits, ${upgradesOwnedCount(state)} améliorations.`);
+  + `${stars(state)} Étoiles en banque (${recipeLayer(state).resets} prestiges, `
+  + `${Object.keys(recipeLayer(state).nodes).length}/${PRESTIGE_TREE.length} nœuds), `
+  + `${achievementsOwnedCount(state)} hauts faits, ${upgradesOwnedCount(state)} améliorations.`);
 console.log(`Cuisines : ${GENERATORS.map((g) => `${g.name.split(' ')[0]} ${state.generators[g.id].owned}`).join(' · ')}\n`);

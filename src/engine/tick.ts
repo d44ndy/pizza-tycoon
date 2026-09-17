@@ -5,51 +5,18 @@
  * La boucle de jeu l'appelle avec un pas FIXE (50 ms) ; le temps réel écoulé est absorbé
  * par un accumulateur côté store, jamais ici.
  */
-import type { Decimal } from './decimal.ts';
 import type { GameState } from './state.ts';
-import { totalProduction, shouldUnlock } from './formulas.ts';
+import { totalProduction } from './formulas.ts';
+import { addPizzas, updateUnlocks } from './core.ts';
 import { checkAchievements } from './achievements.ts';
 import { updateEvents } from './events.ts';
-import { GENERATORS } from '../data/generators.ts';
+import { runAutomation } from './automation.ts';
 import { TICK_SECONDS } from '../data/config.ts';
 import type { AchievementDef } from '../data/achievements.ts';
 
-/**
- * Crédite des pizzas et met à jour les compteurs de gains.
- * `handmade` distingue les pizzas pétries au clic (utile pour les succès de Phase 2).
- */
-export function addPizzas(state: GameState, amount: Decimal, handmade = false): GameState {
-  if (amount.lte(0)) return state;
-  const pizzas = state.pizzas.add(amount);
-  return {
-    ...state,
-    pizzas,
-    stats: {
-      ...state.stats,
-      earnedRun: state.stats.earnedRun.add(amount),
-      earnedPrestige: state.stats.earnedPrestige.add(amount),
-      earnedTotal: state.stats.earnedTotal.add(amount),
-      handmadeTotal: handmade ? state.stats.handmadeTotal.add(amount) : state.stats.handmadeTotal,
-      bestPizzas: pizzas.gt(state.stats.bestPizzas) ? pizzas : state.stats.bestPizzas,
-    },
-  };
-}
 
-/**
- * Révélation progressive : un générateur apparaît dès que le joueur possède 50 % de son coût,
- * et ne disparaît plus jamais ensuite.
- */
-export function updateUnlocks(state: GameState): GameState {
-  let changed = false;
-  const generators = { ...state.generators };
-  for (const def of GENERATORS) {
-    if (!generators[def.id].unlocked && shouldUnlock(state, def)) {
-      generators[def.id] = { ...generators[def.id], unlocked: true };
-      changed = true;
-    }
-  }
-  return changed ? { ...state, generators } : state;
-}
+// Ré-exportées ici : le reste du code les importait déjà depuis ce module.
+export { addPizzas, updateUnlocks };
 
 /**
  * Avance la simulation de `dt` secondes.
@@ -76,6 +43,7 @@ export function tick(
   next = addPizzas(next, production.mul(dt));
   next = updateUnlocks(next);
   next = updateEvents(next);
+  next = runAutomation(next, dt);
 
   const checked = checkAchievements(next, production);
   if (checked.unlocked.length > 0 && onAchievement) onAchievement(checked.unlocked);

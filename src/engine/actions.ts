@@ -5,7 +5,7 @@
 import { ZERO, type Decimal } from './decimal.ts';
 import type { BulkMode, GameState, Settings, TabId } from './state.ts';
 import { GENERATORS_BY_ID, type GeneratorId } from '../data/generators.ts';
-import { clickPower, resolveBulk, totalProduction } from './formulas.ts';
+import { clickPower, generatorCostFactor, resolveBulk, totalProduction } from './formulas.ts';
 import { addPizzas, updateUnlocks } from './tick.ts';
 import { clickPendingEvent, hasBuff, type EventClickResult } from './events.ts';
 import { raiseFlag } from './achievements.ts';
@@ -59,7 +59,7 @@ export function buyGenerator(state: GameState, id: GeneratorId, mode?: BulkMode)
   const bulkMode = mode ?? state.settings.bulkMode;
   const def = GENERATORS_BY_ID[id];
   const gs = state.generators[id];
-  const { count, cost, affordable } = resolveBulk(def, gs.owned, state.pizzas, bulkMode);
+  const { count, cost, affordable } = resolveBulk(def, gs.owned, state.pizzas, bulkMode, generatorCostFactor(state));
 
   if (!affordable || count <= 0) {
     return { state, bought: 0, spent: ZERO };

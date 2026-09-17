@@ -54,9 +54,12 @@ plateforme à l'autre ; ces pictos partagent tous la même épaisseur de trait.
 src/
   engine/     logique PURE — interdit d'importer React, le DOM ou Date.now() ici
     decimal.ts   enveloppe break_eternity (D, ZERO, ONE…)
+    core.ts      addPizzas / updateUnlocks (partagés par le tick et les actions)
     upgrades.ts  déblocage, achat et lecture des effets des améliorations
     achievements.ts  évaluation des conditions, bonus de collection, drapeaux
     events.ts    pizzas d'or : apparition, expiration, effets temporaires
+    prestige.ts  Étoiles, arbre de compétences, remise à zéro
+    automation.ts pétrisseur et acheteurs automatiques (arbre de prestige)
     format.ts    format() : standard / scientifique / ingénieur (+ formatInt, formatTime)
     rng.ts       RNG déterministe seedé (mulberry32), graine stockée dans l'état
     state.ts     GameState + createInitialState()
@@ -68,9 +71,10 @@ src/
   data/       contenu et équilibrage
     config.ts    TOUTES les constantes d'équilibrage (croissance 1,15, paliers, plafonds…)
     generators.ts les 10 cuisines (coût de base, production de base, picto, texte)
-    upgrades.ts  74 améliorations (cuisine, synergie, clic, recettes globales)
+    upgrades.ts  68 améliorations (cuisine, synergie, clic)
     achievements.ts 82 hauts faits, dont 8 cachés
     events.ts    les quatre pizzas d'or et leurs réglages
+    prestige.ts  les 28 nœuds de l'arbre et la formule des Étoiles
     i18n/fr.ts   TOUS les textes affichés
   store/      pont entre le moteur et React
     gameLoop.ts  rAF + accumulateur à pas fixe, autosave, hors ligne, actions exposées
@@ -96,7 +100,12 @@ tests/        tests Vitest du moteur
 6. **Un seul formateur de nombres** : `format()` de `engine/format.ts`, via le hook `useFormat()`.
 7. **Les événements se règlent sur le temps de JEU** (`stats.playTimeTotal`), jamais sur
    l'horloge système : c'est ce qui garde `tick()` déterministe et rejouable par le simulateur.
-8. **Le joueur n'est jamais pénalisé pour son inaction.** Le seul effet négatif du jeu
+8. **`core.ts` existe pour casser un cycle d'imports** : `tick.ts` a besoin des actions
+   (automatisation) et les actions ont besoin de `addPizzas` / `updateUnlocks`.
+   Ne jamais faire importer `tick.ts` par `actions.ts`.
+9. **L'automatisation passe par les mêmes actions que le joueur** (`clickDough`,
+   `buyGenerator`, `buyUpgrade`) : aucune règle parallèle, donc aucune divergence possible.
+10. **Le joueur n'est jamais pénalisé pour son inaction.** Le seul effet négatif du jeu
    (le contrôle d'hygiène) ne s'applique que si le joueur clique dessus, et il est
    visuellement distinct pour qu'il puisse choisir de l'ignorer.
 
@@ -135,6 +144,28 @@ Deux comportements volontaires, qui ne sont pas des bugs :
 - la production ralentit nettement après ~4 h de jeu actif, une fois l'essentiel des
   68 améliorations acheté. C'est le mur que le prestige doit débloquer.
 
+### Prestige — « Recette Secrète »
+
+Étoiles gagnées = `floor(cbrt(pizzas cumulées depuis la dernière transcendance / 1e9))`,
+moins celles déjà encaissées. Chaque Étoile **non dépensée** donne +2 % de production
+(jusqu'à +5 % avec l'arbre).
+
+- **Remis à zéro** : pizzas, cuisines, améliorations, statistiques de la run, pizzas d'or.
+- **Conservé** : hauts faits, drapeaux, statistiques globales, Étoiles, arbre, réglages.
+- L'arbre compte **28 nœuds** en 4 branches (fournil, salle, nuit, brigade) pour 481 Étoiles
+  au total : il s'ouvre sur plusieurs semaines, c'est voulu.
+- Les effets de l'arbre sont agrégés par `treeEffects()` : les multiplicateurs se
+  multiplient, les valeurs (rendement hors ligne, plafond, bonus par Étoile) prennent
+  le MEILLEUR nœud — acheter la version supérieure remplace la précédente.
+
+Rythme mesuré au simulateur (joueur actif, `--hours 48`) : prestiges à 52 min, 1 h 46,
+3 h 15, 6 h 07, 11 h 35, 21 h 48 et 1 j 12 h ; 12 nœuds sur 28 et 10e cuisine achetée
+à 16 h 38 de jeu cumulé.
+
+Le simulateur applique la règle du cahier des charges : on prestige quand le gain
+**double le total d'Étoiles déjà gagnées** (pas la banque — sinon, comme l'arbre vide
+la banque, la règle dégénère en « prestige dès la première Étoile »).
+
 ### Sauvegarde
 
 Clé `pizza-tycoon-save`, champ `version` + table `MIGRATIONS` appliquée en chaîne au chargement.
@@ -155,13 +186,12 @@ Une sauvegarde illisible n'est **jamais** écrasée : elle est recopiée dans
 | 0 | Choix du thème | ✅ Empire de la Pizza |
 | 1 | MVP : moteur, 10 cuisines, achat groupé, paliers, sauvegarde, hors ligne | ✅ |
 | 2 | Améliorations, synergies, pizzas d'or, 82 hauts faits, simulateur, direction visuelle | ✅ |
-| 3 | Prestige « Recette Secrète » (⭐ Étoiles), arbre de compétences, automatisation | à venir |
+| 3 | Prestige « Recette Secrète » (⭐ Étoiles), arbre de compétences, automatisation | ✅ |
 | 4 | 8 défis + récompenses | à venir |
 | 5 | Prestige couche 2 « Expansion Mondiale » (villes), PWA, sons, déploiement GitHub Pages | à venir |
 
 Points d'extension déjà en place pour la suite :
-- `formulas.globalMultiplier()` : pipeline unique où brancher les Étoiles et les défis
-  (les hauts faits et les recettes globales y sont déjà branchés).
-- `state.prestige.layers` : dictionnaire prêt pour N couches (`recipe`, `expansion`).
-- `offline.offlineEfficiency()` / `offlineCapSeconds()` : à rendre dépendants de l'arbre en Phase 3.
-- `engine/rng.ts` : déjà en place pour les événements aléatoires de la Phase 2.
+- `formulas.globalMultiplier()` : pipeline unique où brancher les défis de la Phase 4
+  (hauts faits, Étoiles et arbre y sont déjà branchés).
+- `state.prestige.layers` : dictionnaire prêt pour la couche 2 (`expansion`).
+- `engine/prestige.ts` : `doPrestige()` sert de modèle à la transcendance de la Phase 5.

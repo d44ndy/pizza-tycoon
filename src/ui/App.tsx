@@ -12,6 +12,7 @@ import { formatTime } from '../engine/format.ts';
 import { OFFLINE_BASE_EFFICIENCY } from '../data/config.ts';
 import { availableUpgrades, upgradesOwnedCount } from '../engine/upgrades.ts';
 import { achievementsOwnedCount } from '../engine/achievements.ts';
+import { canPrestige, recipeLayer } from '../engine/prestige.ts';
 import { doRaiseFlag, startLoop } from '../store/gameLoop.ts';
 import { useGameStore } from '../store/gameStore.ts';
 import { Tabs } from './Tabs.tsx';
@@ -23,6 +24,7 @@ import { AchievementsPanel } from './panels/AchievementsPanel.tsx';
 import { ClickerPanel } from './panels/ClickerPanel.tsx';
 import { GeneratorList } from './panels/GeneratorList.tsx';
 import { OptionsPanel } from './panels/OptionsPanel.tsx';
+import { PrestigePanel } from './panels/PrestigePanel.tsx';
 import { StatsPanel } from './panels/StatsPanel.tsx';
 import { UpgradesPanel } from './panels/UpgradesPanel.tsx';
 import { useFormat } from './useFormat.ts';
@@ -54,6 +56,15 @@ export function App() {
   const anyGenerator = GENERATORS.some((def) => state.generators[def.id].unlocked);
   const anyUpgrade = upgradesOwnedCount(state) > 0 || availableUpgrades(state).length > 0;
   const anyAchievement = achievementsOwnedCount(state) > 0;
+  // L'onglet Recette Secrète apparaît dès la première Étoile à portée, et reste ensuite.
+  const prestigeReady = canPrestige(state);
+  const showPrestige = prestigeReady || recipeLayer(state).resets > 0;
+  /**
+   * La barre d'onglets ne disparaît plus une fois apparue. Sans ça, un prestige
+   * reverrouille toutes les cuisines et le joueur se retrouve enfermé dans l'onglet
+   * où il se trouvait, sans moyen de revenir au jeu.
+   */
+  const showTabs = anyGenerator || anyAchievement || showPrestige;
 
   // Œuf de Pâques : insister sur le sujet qui fâche.
   const titleClicks = useRef(0);
@@ -73,14 +84,17 @@ export function App() {
         <BuffBar />
       </header>
 
-      {anyGenerator && (
+      {showTabs && (
         <div className={styles.nav}>
-          <Tabs showAchievements={anyAchievement} />
+          <Tabs showAchievements={anyAchievement} showPrestige={showPrestige} prestigeReady={prestigeReady} />
         </div>
       )}
 
       {tab === 'game' && (
-        <main className={styles.layout} data-columns={anyGenerator ? (anyUpgrade ? 3 : 2) : 1}>
+        <main
+          className={styles.layout}
+          data-columns={1 + (anyGenerator ? 1 : 0) + (anyUpgrade ? 1 : 0)}
+        >
           <div className={styles.left}>
             <ClickerPanel />
           </div>
@@ -98,6 +112,7 @@ export function App() {
       )}
 
       {tab === 'succes' && <main className={styles.single}><AchievementsPanel /></main>}
+      {tab === 'prestige' && <main className={styles.single}><PrestigePanel /></main>}
       {tab === 'stats' && <main className={styles.single}><StatsPanel /></main>}
       {tab === 'options' && <main className={styles.single}><OptionsPanel /></main>}
 

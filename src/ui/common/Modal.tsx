@@ -7,17 +7,27 @@ type Props = {
   children: ReactNode;
   actionLabel: string;
   onAction: () => void;
+  /** Action secondaire facultative (les actions destructrices doivent pouvoir s'annuler). */
+  cancelLabel?: string;
+  onCancel?: () => void;
 };
 
-export function Modal({ title, children, actionLabel, onAction }: Props) {
+export function Modal({ title, children, actionLabel, onAction, cancelLabel, onCancel }: Props) {
   return (
     <div className={styles.backdrop} role="dialog" aria-modal="true" aria-label={title}>
       <div className={styles.box}>
         <h2 className={styles.title}>{title}</h2>
         <div className={styles.content}>{children}</div>
-        <button type="button" className={styles.action} onClick={onAction} autoFocus>
-          {actionLabel}
-        </button>
+        <div className={styles.actions}>
+          {cancelLabel && onCancel && (
+            <button type="button" className={styles.cancel} onClick={onCancel}>
+              {cancelLabel}
+            </button>
+          )}
+          <button type="button" className={styles.action} onClick={onAction} autoFocus>
+            {actionLabel}
+          </button>
+        </div>
       </div>
     </div>
   );

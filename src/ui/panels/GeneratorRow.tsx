@@ -3,7 +3,8 @@ import { t } from '../../data/i18n/fr.ts';
 import type { GeneratorDef } from '../../data/generators.ts';
 import { milestonesReached } from '../../data/config.ts';
 import {
-  generatorMultiplier, generatorProduction, milestoneProgress, productionShare, resolveBulk,
+  generatorCostFactor, generatorMultiplier, generatorProduction, milestoneProgress,
+  productionShare, resolveBulk,
 } from '../../engine/formulas.ts';
 import { doBuy } from '../../store/gameLoop.ts';
 import { useGameStore } from '../../store/gameStore.ts';
@@ -20,7 +21,7 @@ export function GeneratorRow({ def }: Props) {
   const { fmt, fmtInt } = useFormat();
 
   const gs = state.generators[def.id];
-  const bulk = resolveBulk(def, gs.owned, state.pizzas, state.settings.bulkMode);
+  const bulk = resolveBulk(def, gs.owned, state.pizzas, state.settings.bulkMode, generatorCostFactor(state));
   const progress = milestoneProgress(gs.owned);
   const unitProduction = def.baseProduction.mul(generatorMultiplier(state, def.id));
   const multiplier = Math.pow(2, milestonesReached(gs.owned));

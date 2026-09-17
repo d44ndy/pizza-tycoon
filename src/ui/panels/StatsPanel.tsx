@@ -5,6 +5,7 @@ import { formatTime } from '../../engine/format.ts';
 import { clickPower } from '../../engine/formulas.ts';
 import { achievementMultiplier, achievementsOwnedCount } from '../../engine/achievements.ts';
 import { upgradesOwnedCount } from '../../engine/upgrades.ts';
+import { recipeLayer, starMultiplier } from '../../engine/prestige.ts';
 import { ACHIEVEMENTS } from '../../data/achievements.ts';
 import { UPGRADES } from '../../data/upgrades.ts';
 import { useGameStore } from '../../store/gameStore.ts';
@@ -26,6 +27,9 @@ export function StatsPanel() {
     [t.stats.achievementsOwned, `${fmtInt(achievementsOwnedCount(state))} / ${ACHIEVEMENTS.length}`],
     [t.stats.achievementBonus, `×${achievementMultiplier(state).toNumber().toFixed(2)}`],
     [t.stats.eventsClicked, fmtInt(state.stats.eventsClicked)],
+    [t.stats.stars, fmt(recipeLayer(state).currency)],
+    [t.stats.starBonus, `×${starMultiplier(state).toNumber().toFixed(2)}`],
+    [t.stats.prestigeCount, fmtInt(recipeLayer(state).resets)],
     [t.stats.earnedRun, fmt(state.stats.earnedRun)],
     [t.stats.earnedTotal, fmt(state.stats.earnedTotal)],
     [t.stats.best, fmt(state.stats.bestPizzas)],

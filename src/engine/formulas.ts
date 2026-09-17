@@ -9,6 +9,7 @@ import { GENERATORS, GENERATORS_BY_ID, type GeneratorDef, type GeneratorId } fro
 import { UPGRADES_BY_ID } from '../data/upgrades.ts';
 import { achievementMultiplier } from './achievements.ts';
 import { eventClickMultiplier, eventProductionMultiplier } from './events.ts';
+import { starMultiplier, treeEffects } from './prestige.ts';
 import {
   BASE_CLICK_POWER, COST_GROWTH, MILESTONE_MULTIPLIER, UNLOCK_RATIO,
   milestonesReached, nextMilestone, previousMilestone,
@@ -27,18 +28,27 @@ function powFast(base: number, exponent: number): Decimal {
   return Number.isFinite(value) ? D(value) : D(base).pow(exponent);
 }
 
-/** Coût du prochain exemplaire : base × 1,15^possédés. */
-export function costOfNext(def: GeneratorDef, owned: number): Decimal {
-  return def.baseCost.mul(powFast(COST_GROWTH, owned));
+/** Réduction de coût accordée par l'arbre de prestige (1 = prix plein). */
+export function generatorCostFactor(state: GameState): number {
+  return treeEffects(state).generatorCost;
+}
+
+/**
+ * Coût du prochain exemplaire : base × 1,15^possédés × réduction de l'arbre.
+ * `costFactor` est passé explicitement pour que les formules restent des fonctions
+ * de calcul pur, utilisables sans état (tests, simulateur).
+ */
+export function costOfNext(def: GeneratorDef, owned: number, costFactor = 1): Decimal {
+  return def.baseCost.mul(powFast(COST_GROWTH, owned)).mul(costFactor);
 }
 
 /**
  * Coût de `k` exemplaires d'un coup (somme d'une suite géométrique) :
  * base × 1,15^possédés × (1,15^k − 1) / 0,15
  */
-export function costOfK(def: GeneratorDef, owned: number, k: number): Decimal {
+export function costOfK(def: GeneratorDef, owned: number, k: number, costFactor = 1): Decimal {
   if (k <= 0) return ZERO;
-  const start = costOfNext(def, owned);
+  const start = costOfNext(def, owned, costFactor);
   return start.mul(powFast(COST_GROWTH, k).sub(1)).div(COST_GROWTH - 1);
 }
 
@@ -49,8 +59,8 @@ export function costOfK(def: GeneratorDef, owned: number, k: number): Decimal {
  * Le logarithme passe par des flottants : on corrige ensuite d'un cran si
  * l'arrondi nous a fait viser un exemplaire de trop (ou de trop peu).
  */
-export function maxAffordable(def: GeneratorDef, owned: number, money: Decimal): number {
-  const start = costOfNext(def, owned);
+export function maxAffordable(def: GeneratorDef, owned: number, money: Decimal, costFactor = 1): number {
+  const start = costOfNext(def, owned, costFactor);
   if (money.lt(start)) return 0;
 
   const ratio = money.mul(COST_GROWTH - 1).div(start).add(1);
@@ -60,8 +70,8 @@ export function maxAffordable(def: GeneratorDef, owned: number, money: Decimal):
   let k = Math.max(0, Math.floor(raw));
   // Corrections de sécurité (au plus quelques itérations).
   let guard = 0;
-  while (k > 0 && costOfK(def, owned, k).gt(money) && guard++ < 8) k--;
-  while (costOfK(def, owned, k + 1).lte(money) && guard++ < 16) k++;
+  while (k > 0 && costOfK(def, owned, k, costFactor).gt(money) && guard++ < 8) k--;
+  while (costOfK(def, owned, k + 1, costFactor).lte(money) && guard++ < 16) k++;
   return k;
 }
 
@@ -71,12 +81,13 @@ export function resolveBulk(
   owned: number,
   money: Decimal,
   bulkMode: BulkMode,
+  costFactor = 1,
 ): { count: number; cost: Decimal; affordable: boolean } {
   if (bulkMode === 'max') {
-    const count = maxAffordable(def, owned, money);
-    return { count, cost: costOfK(def, owned, count), affordable: count > 0 };
+    const count = maxAffordable(def, owned, money, costFactor);
+    return { count, cost: costOfK(def, owned, count, costFactor), affordable: count > 0 };
   }
-  const cost = costOfK(def, owned, bulkMode);
+  const cost = costOfK(def, owned, bulkMode, costFactor);
   return { count: bulkMode, cost, affordable: money.gte(cost) };
 }
 
@@ -108,7 +119,10 @@ export function generatorMultiplier(state: GameState, id: GeneratorId): Decimal 
  * viendront brancher leurs sources ici, sans toucher au tick.
  */
 export function globalMultiplier(state: GameState): Decimal {
-  return achievementMultiplier(state).mul(eventProductionMultiplier(state));
+  return achievementMultiplier(state)
+    .mul(eventProductionMultiplier(state))
+    .mul(starMultiplier(state))
+    .mul(treeEffects(state).globalMult);
 }
 
 /** Production d'un générateur, pizzas par seconde, tous multiplicateurs inclus. */
@@ -148,6 +162,7 @@ export function clickPower(state: GameState): Decimal {
   const base = D(BASE_CLICK_POWER)
     .mul(mult)
     .mul(globalMultiplier(state))
+    .mul(treeEffects(state).clickMult)
     .mul(eventClickMultiplier(state));
 
   if (productionPercent === 0) return base;
@@ -158,7 +173,7 @@ export function clickPower(state: GameState): Decimal {
 export function shouldUnlock(state: GameState, def: GeneratorDef): boolean {
   const gs = state.generators[def.id];
   if (gs.unlocked) return true;
-  return state.pizzas.gte(costOfNext(def, gs.owned).mul(UNLOCK_RATIO));
+  return state.pizzas.gte(costOfNext(def, gs.owned, generatorCostFactor(state)).mul(UNLOCK_RATIO));
 }
 
 /** Progression (0 → 1) vers le prochain palier de production. */

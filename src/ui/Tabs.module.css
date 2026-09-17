@@ -37,6 +37,20 @@
   color: var(--paper);
 }
 
+/* Une recette secrète est disponible : l'onglet le signale sans être criard. */
+.tab[data-ready='true'] {
+  color: var(--tom);
+}
+
+.tab[data-ready='true']::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tom);
+  border: 1.5px solid var(--line);
+}
+
 /* Mobile : barre d'onglets fixée en bas de l'écran. */
 @media (max-width: 899px) {
   .tabs {

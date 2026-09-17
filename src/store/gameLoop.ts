@@ -19,6 +19,7 @@ import { clearStorage, exportSave, importSave, loadFromStorage, saveToStorage } 
 import { tick } from '../engine/tick.ts';
 import { buyGenerator, catchEvent, clickDough } from '../engine/actions.ts';
 import { buyUpgrade } from '../engine/upgrades.ts';
+import { buyNode, doPrestige } from '../engine/prestige.ts';
 import { raiseFlag } from '../engine/achievements.ts';
 import { clearBuffs } from '../engine/events.ts';
 import type { FlagId } from '../data/achievements.ts';
@@ -85,6 +86,21 @@ export function doCatchEvent(): { gained: Decimal; name: string } | null {
   current = result.state;
   publish();
   return { gained: result.gained, name: EVENT_NAMES[result.kind] };
+}
+
+/** Brûle la recette : remise à zéro contre des Étoiles. Sauvegarde aussitôt. */
+export function doPrestigeNow(): Decimal | null {
+  const result = doPrestige(current);
+  if (result.gained.lte(0)) return null;
+  current = result.state;
+  saveNow();
+  publish();
+  return result.gained;
+}
+
+export function doBuyNode(id: string): void {
+  dispatch((state) => buyNode(state, id).state);
+  saveNow();
 }
 
 /** Déclenche un fait marquant depuis l'interface (œuf de Pâques, horloge système…). */

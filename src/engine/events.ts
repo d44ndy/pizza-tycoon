@@ -10,8 +10,9 @@ import { nextRange } from './rng.ts';
 import { GENERATORS } from '../data/generators.ts';
 import {
   EVENTS, EVENTS_BY_KIND, EVENT_LIFETIME, EVENT_MAX_DELAY, EVENT_MIN_DELAY,
-  JACKPOT_SECONDS, JACKPOT_STOCK_RATIO, type EventKind,
+  JACKPOT_STOCK_RATIO, type EventKind,
 } from '../data/events.ts';
+import { treeEffects } from './prestige.ts';
 
 const TOTAL_WEIGHT = EVENTS.reduce((sum, e) => sum + e.weight, 0);
 
@@ -80,9 +81,11 @@ export function updateEvents(state: GameState): GameState {
 
   if (!eventsEnabled(state)) return changed ? { ...state, events } : state;
 
-  // 3. Première planification (ou apparition due).
+  // 3. Première planification (ou apparition due). L'arbre de prestige peut
+  //    raccourcir le délai entre deux pizzas d'or.
+  const frequency = treeEffects(state).eventFrequency;
   if (events.nextSpawnAt <= 0) {
-    const delay = nextRange(rng, EVENT_MIN_DELAY, EVENT_MAX_DELAY);
+    const delay = nextRange(rng, EVENT_MIN_DELAY * frequency, EVENT_MAX_DELAY * frequency);
     rng = delay.next;
     events = { ...events, nextSpawnAt: now + delay.value };
     changed = true;
@@ -90,7 +93,7 @@ export function updateEvents(state: GameState): GameState {
     const kindRoll = nextRange(rng, 0, 1);
     const xRoll = nextRange(kindRoll.next, 8, 92);
     const yRoll = nextRange(xRoll.next, 10, 85);
-    const delay = nextRange(yRoll.next, EVENT_MIN_DELAY, EVENT_MAX_DELAY);
+    const delay = nextRange(yRoll.next, EVENT_MIN_DELAY * frequency, EVENT_MAX_DELAY * frequency);
     rng = delay.next;
     events = {
       ...events,
@@ -121,6 +124,7 @@ export function clickPendingEvent(state: GameState, production: Decimal): EventC
   if (!pending) return { state, kind: null, gained: ZERO };
 
   const def = EVENTS_BY_KIND[pending.kind];
+  const effects = treeEffects(state);
   const now = state.stats.playTimeTotal;
   let next: GameState = {
     ...state,
@@ -130,12 +134,12 @@ export function clickPendingEvent(state: GameState, production: Decimal): EventC
 
   let gained = ZERO;
   if (pending.kind === 'jackpot') {
-    const fromProduction = production.mul(JACKPOT_SECONDS);
+    const fromProduction = production.mul(effects.jackpotSeconds);
     const cap = state.pizzas.mul(JACKPOT_STOCK_RATIO);
     gained = fromProduction.lt(cap) ? fromProduction : cap;
     next = { ...next, flags: { ...next.flags, jackpot: true } };
   } else {
-    const buff: ActiveBuff = { kind: pending.kind, endsAt: now + def.duration };
+    const buff: ActiveBuff = { kind: pending.kind, endsAt: now + def.duration * effects.eventDuration };
     next = { ...next, events: { ...next.events, buffs: [...next.events.buffs, buff] } };
     if (pending.kind === 'malus') next = { ...next, flags: { ...next.flags, malusClicked: true } };
   }

@@ -99,7 +99,7 @@
   }
 
   .layout[data-columns='2'] {
-    grid-template-columns: 296px minmax(0, 560px);
+    grid-template-columns: 296px minmax(0, 520px);
     justify-content: center;
   }
 

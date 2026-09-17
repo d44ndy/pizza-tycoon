@@ -9,7 +9,7 @@ import { ZERO, type Decimal } from './decimal.ts';
 import type { GameState } from './state.ts';
 import { totalProduction } from './formulas.ts';
 import { addPizzas, updateUnlocks } from './tick.ts';
-import { OFFLINE_BASE_CAP_SECONDS, OFFLINE_BASE_EFFICIENCY } from '../data/config.ts';
+import { treeEffects } from './prestige.ts';
 
 /** En deçà de ce délai, on ne dérange pas le joueur avec une popup. */
 export const OFFLINE_MIN_SECONDS = 60;
@@ -26,14 +26,14 @@ export type OfflineResult = {
   capped: boolean;
 };
 
-/** Efficacité hors ligne — améliorable par l'arbre de prestige en Phase 3. */
-export function offlineEfficiency(_state: GameState): number {
-  return OFFLINE_BASE_EFFICIENCY;
+/** Rendement hors ligne : 50 % au départ, jusqu'à 100 % via l'arbre de prestige. */
+export function offlineEfficiency(state: GameState): number {
+  return treeEffects(state).offlineEfficiency;
 }
 
-/** Plafond de temps hors ligne, en secondes — améliorable en Phase 3. */
-export function offlineCapSeconds(_state: GameState): number {
-  return OFFLINE_BASE_CAP_SECONDS;
+/** Plafond de temps hors ligne : 8 h au départ, jusqu'à 24 h via l'arbre. */
+export function offlineCapSeconds(state: GameState): number {
+  return treeEffects(state).offlineCapSeconds;
 }
 
 /**
