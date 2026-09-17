@@ -11,7 +11,7 @@ import {
 } from '../../data/prestige.ts';
 import {
   canBuyNode, hasNode, isNodeAvailable, pendingStars, recipeLayer,
-  starMultiplier, starsFromTotal, totalForStars, treeEffects,
+  starMultiplier, starsFromTotal, totalForStars, permanentEffects,
 } from '../../engine/prestige.ts';
 import { doBuyNode, doPrestigeNow } from '../../store/gameLoop.ts';
 import { useGameStore } from '../../store/gameStore.ts';
@@ -72,7 +72,7 @@ export function PrestigePanel() {
           <span className="num">{layer.resets}</span>
         </div>
         <div className={styles.summaryRow}>
-          <span>{t.prestige.bonus((treeEffects(state).starBonus * 100).toFixed(0))}</span>
+          <span>{t.prestige.bonus((permanentEffects(state).starBonus * 100).toFixed(0))}</span>
           <span className="num">×{starMultiplier(state).toNumber().toFixed(2)}</span>
         </div>
       </div>

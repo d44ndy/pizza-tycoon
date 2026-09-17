@@ -9,8 +9,9 @@ import type { GameState } from './state.ts';
 import { GENERATORS } from '../data/generators.ts';
 import { buyGenerator, clickDough } from './actions.ts';
 import { availableUpgrades, buyUpgrade } from './upgrades.ts';
-import { costOfNext, generatorCostFactor, totalProduction } from './formulas.ts';
-import { treeEffects } from './prestige.ts';
+import { costOfNext, costRules, totalProduction } from './formulas.ts';
+import { currentRules, isGeneratorAllowed } from './challenges.ts';
+import { permanentEffects } from './prestige.ts';
 
 /** Intervalle entre deux passes d'achat automatique, en secondes. */
 const BUY_INTERVAL = 1;
@@ -25,14 +26,16 @@ const AUTO_BUY_STOCK_RATIO = 0.5;
 /** Achète la cuisine au meilleur rapport production/coût, si elle est abordable. */
 function autoBuyGenerator(state: GameState): GameState {
   const budget = state.pizzas.mul(AUTO_BUY_STOCK_RATIO);
-  const costFactor = generatorCostFactor(state);
+  const rules = costRules(state);
+  const allowed = currentRules(state);
   const current = totalProduction(state);
 
   let bestId: (typeof GENERATORS)[number]['id'] | null = null;
   let bestRatio = 0;
   for (const def of GENERATORS) {
+    if (!isGeneratorAllowed(allowed, def)) continue;
     const owned = state.generators[def.id].owned;
-    const cost = costOfNext(def, owned, costFactor);
+    const cost = costOfNext(def, owned, rules);
     if (cost.gt(budget)) continue;
     const after = totalProduction({
       ...state,
@@ -61,7 +64,7 @@ function autoBuyUpgrade(state: GameState): GameState {
  * donc le résultat ne dépend pas du découpage du temps.
  */
 export function runAutomation(state: GameState, dt: number): GameState {
-  const effects = treeEffects(state);
+  const effects = permanentEffects(state);
   const automates = effects.autoClick > 0 || effects.autoBuyGenerators || effects.autoBuyUpgrades;
   if (!automates) return state;
 

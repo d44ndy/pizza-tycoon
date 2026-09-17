@@ -10,21 +10,28 @@ import { useGameStore } from '../store/gameStore.ts';
 import { Picto, type PictoName } from './icons/Picto.tsx';
 import styles from './Tabs.module.css';
 
-type Props = { showAchievements: boolean; showPrestige: boolean; prestigeReady: boolean };
+type Props = {
+  showAchievements: boolean;
+  showPrestige: boolean;
+  showChallenges: boolean;
+  prestigeReady: boolean;
+};
 
 const TABS: Array<[TabId, string, PictoName]> = [
   ['game', t.tabs.game, 'four'],
   ['succes', t.tabs.succes, 'trophy'],
   ['prestige', t.tabs.prestige, 'sparkle'],
+  ['defis', t.tabs.defis, 'trophy'],
   ['stats', t.tabs.stats, 'recette'],
   ['options', t.tabs.options, 'synergy'],
 ];
 
-export function Tabs({ showAchievements, showPrestige, prestigeReady }: Props) {
+export function Tabs({ showAchievements, showPrestige, showChallenges, prestigeReady }: Props) {
   const tab = useGameStore((s) => s.state.ui.tab);
   const visible = TABS.filter(([id]) => {
     if (id === 'succes') return showAchievements;
     if (id === 'prestige') return showPrestige;
+    if (id === 'defis') return showChallenges;
     return true;
   });
 

@@ -13,10 +13,12 @@ import { OFFLINE_BASE_EFFICIENCY } from '../data/config.ts';
 import { availableUpgrades, upgradesOwnedCount } from '../engine/upgrades.ts';
 import { achievementsOwnedCount } from '../engine/achievements.ts';
 import { canPrestige, recipeLayer } from '../engine/prestige.ts';
+import { challengesUnlocked } from '../engine/challenges.ts';
 import { doRaiseFlag, startLoop } from '../store/gameLoop.ts';
 import { useGameStore } from '../store/gameStore.ts';
 import { Tabs } from './Tabs.tsx';
 import { BuffBar } from './common/BuffBar.tsx';
+import { ChallengeBanner } from './common/ChallengeBanner.tsx';
 import { GoldenPizza } from './common/GoldenPizza.tsx';
 import { Modal } from './common/Modal.tsx';
 import { Toasts } from './common/Toasts.tsx';
@@ -25,6 +27,7 @@ import { ClickerPanel } from './panels/ClickerPanel.tsx';
 import { GeneratorList } from './panels/GeneratorList.tsx';
 import { OptionsPanel } from './panels/OptionsPanel.tsx';
 import { PrestigePanel } from './panels/PrestigePanel.tsx';
+import { ChallengesPanel } from './panels/ChallengesPanel.tsx';
 import { StatsPanel } from './panels/StatsPanel.tsx';
 import { UpgradesPanel } from './panels/UpgradesPanel.tsx';
 import { useFormat } from './useFormat.ts';
@@ -64,7 +67,8 @@ export function App() {
    * reverrouille toutes les cuisines et le joueur se retrouve enfermé dans l'onglet
    * où il se trouvait, sans moyen de revenir au jeu.
    */
-  const showTabs = anyGenerator || anyAchievement || showPrestige;
+  const showChallenges = challengesUnlocked(state);
+  const showTabs = anyGenerator || anyAchievement || showPrestige || showChallenges;
 
   // Œuf de Pâques : insister sur le sujet qui fâche.
   const titleClicks = useRef(0);
@@ -81,12 +85,18 @@ export function App() {
             {t.game.title}
           </button>
         </h1>
+        <ChallengeBanner />
         <BuffBar />
       </header>
 
       {showTabs && (
         <div className={styles.nav}>
-          <Tabs showAchievements={anyAchievement} showPrestige={showPrestige} prestigeReady={prestigeReady} />
+          <Tabs
+            showAchievements={anyAchievement}
+            showPrestige={showPrestige}
+            showChallenges={showChallenges}
+            prestigeReady={prestigeReady}
+          />
         </div>
       )}
 
@@ -113,6 +123,7 @@ export function App() {
 
       {tab === 'succes' && <main className={styles.single}><AchievementsPanel /></main>}
       {tab === 'prestige' && <main className={styles.single}><PrestigePanel /></main>}
+      {tab === 'defis' && <main className={styles.single}><ChallengesPanel /></main>}
       {tab === 'stats' && <main className={styles.single}><StatsPanel /></main>}
       {tab === 'options' && <main className={styles.single}><OptionsPanel /></main>}
 

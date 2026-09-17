@@ -24,6 +24,8 @@ export type PrestigeEffect =
   | { readonly type: 'clickMult'; readonly factor: number }
   /** Multiplie le coût des cuisines (0,95 = 5 % moins cher). */
   | { readonly type: 'generatorCost'; readonly factor: number }
+  /** Multiplie le coût des améliorations. */
+  | { readonly type: 'upgradeCost'; readonly factor: number }
   /** Remplace le bonus par Étoile non dépensée. */
   | { readonly type: 'starBonus'; readonly perStar: number }
   /** Rendement hors ligne, en valeur absolue (0 à 1). */

@@ -17,7 +17,7 @@ import type { Notation } from './format.ts';
 export type BulkMode = 1 | 10 | 100 | 'max';
 
 /** Onglets de l'interface (les suivants arriveront avec leurs phases respectives). */
-export type TabId = 'game' | 'succes' | 'prestige' | 'stats' | 'options';
+export type TabId = 'game' | 'succes' | 'prestige' | 'defis' | 'stats' | 'options';
 
 export type GeneratorState = {
   readonly id: GeneratorId;
@@ -84,6 +84,14 @@ export type AutomationState = {
   buyCooldown: number;
 };
 
+/** Défis : celui en cours (s'il y en a un) et ceux déjà validés. */
+export type ChallengesState = {
+  /** Identifiant du défi en cours, ou null. */
+  active: string | null;
+  /** Identifiant -> instant de validation, en secondes de jeu. */
+  completed: Record<string, number>;
+};
+
 export type Stats = {
   /** Horodatage de création de la partie. */
   createdAt: number;
@@ -126,6 +134,7 @@ export type GameState = {
   /** Faits marquants signalés par le moteur ou l'interface. */
   flags: Partial<Record<FlagId, true>>;
   events: EventsState;
+  challenges: ChallengesState;
   automation: AutomationState;
   stats: Stats;
   settings: Settings;
@@ -162,6 +171,7 @@ export function createInitialState(now: number = Date.now(), seed: number = crea
       buffs: [],
       clickBurst: { count: 0, since: 0 },
     },
+    challenges: { active: null, completed: {} },
     automation: { clickCredit: 0, buyCooldown: 0 },
     stats: {
       createdAt: now,

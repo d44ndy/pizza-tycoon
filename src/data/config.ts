@@ -23,7 +23,7 @@ export const MAX_CATCHUP_SECONDS = 5;
 /** Sauvegarde. */
 export const SAVE_KEY = 'pizza-tycoon-save';
 export const SAVE_BACKUP_KEY = 'pizza-tycoon-save-corrupted';
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 export const AUTOSAVE_SECONDS = 30;
 
 /** Progression hors ligne (améliorable par l'arbre de prestige en Phase 3). */

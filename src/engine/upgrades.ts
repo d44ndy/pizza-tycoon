@@ -5,6 +5,8 @@
 import { ZERO, type Decimal } from './decimal.ts';
 import type { GameState } from './state.ts';
 import { UPGRADES, UPGRADES_BY_ID, type UpgradeCondition, type UpgradeDef } from '../data/upgrades.ts';
+import { currentRules } from './challenges.ts';
+import { permanentEffects } from './prestige.ts';
 
 /** Évalue la condition de déblocage d'une amélioration. */
 export function conditionMet(state: GameState, condition: UpgradeCondition): boolean {
@@ -22,8 +24,18 @@ export function isOwned(state: GameState, id: string): boolean {
   return state.upgrades[id] === true;
 }
 
-/** Une amélioration est visible quand sa condition est remplie et qu'elle n'est pas déjà achetée. */
+/** Prix réel d'une amélioration : le défi « Bricolage » les rend 20 % moins chères. */
+export function upgradeCost(state: GameState, def: UpgradeDef): Decimal {
+  const factor = permanentEffects(state).upgradeCost;
+  return factor === 1 ? def.cost : def.cost.mul(factor);
+}
+
+/**
+ * Une amélioration est visible quand sa condition est remplie et qu'elle n'est pas
+ * déjà achetée — sauf pendant un défi qui interdit les améliorations.
+ */
 export function isAvailable(state: GameState, def: UpgradeDef): boolean {
+  if (currentRules(state).upgradesDisabled) return false;
   return !isOwned(state, def.id) && conditionMet(state, def.unlock);
 }
 
@@ -50,16 +62,18 @@ export type BuyUpgradeResult = { state: GameState; bought: boolean; spent: Decim
 
 export function buyUpgrade(state: GameState, id: string): BuyUpgradeResult {
   const def = UPGRADES_BY_ID[id];
-  if (!def || isOwned(state, id) || !conditionMet(state, def.unlock) || state.pizzas.lt(def.cost)) {
-    return { state, bought: false, spent: ZERO };
-  }
+  if (!def || !isAvailable(state, def)) return { state, bought: false, spent: ZERO };
+
+  const cost = upgradeCost(state, def);
+  if (state.pizzas.lt(cost)) return { state, bought: false, spent: ZERO };
+
   return {
     state: {
       ...state,
-      pizzas: state.pizzas.sub(def.cost),
+      pizzas: state.pizzas.sub(cost),
       upgrades: { ...state.upgrades, [id]: true },
     },
     bought: true,
-    spent: def.cost,
+    spent: cost,
   };
 }

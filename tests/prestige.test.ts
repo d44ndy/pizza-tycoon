@@ -3,10 +3,10 @@ import { D } from '../src/engine/decimal.ts';
 import { createTestState, type GameState } from '../src/engine/state.ts';
 import {
   buyNode, canPrestige, doPrestige, hasNode, pendingStars, recipeLayer,
-  starMultiplier, starsFromTotal, treeEffects,
+  starMultiplier, starsFromTotal, permanentEffects,
 } from '../src/engine/prestige.ts';
 import { PRESTIGE_TREE } from '../src/data/prestige.ts';
-import { clickPower, costOfNext, generatorCostFactor, totalProduction } from '../src/engine/formulas.ts';
+import { clickPower, costOfNext, costRules, totalProduction } from '../src/engine/formulas.ts';
 import { offlineCapSeconds, offlineEfficiency } from '../src/engine/offline.ts';
 import { buyUpgrade } from '../src/engine/upgrades.ts';
 import { runFor } from '../src/engine/tick.ts';
@@ -172,7 +172,7 @@ describe('effets de l’arbre', () => {
 
   it('« Étoile montante » remplace le bonus au lieu de s’y ajouter', () => {
     const state = withStars(advanced(), 10, { carnet: 1, 'pate-mere': 1, 'deuxieme-fournee': 1, 'etoile-montante': 1 });
-    expect(treeEffects(state).starBonus).toBe(0.03);
+    expect(permanentEffects(state).starBonus).toBe(0.03);
     expect(starMultiplier(state).toNumber()).toBeCloseTo(1.3, 9);
   });
 
@@ -186,9 +186,9 @@ describe('effets de l’arbre', () => {
 
   it('réduit le coût des cuisines', () => {
     const state = withStars(advanced(), 0, { carnet: 1, 'pate-mere': 1, 'achats-groupes': 1 });
-    expect(generatorCostFactor(state)).toBeCloseTo(0.95, 9);
+    expect(costRules(state).factor).toBeCloseTo(0.95, 9);
     const def = GENERATORS_BY_ID.four;
-    expect(costOfNext(def, 0, generatorCostFactor(state)).toNumber()).toBeCloseTo(95, 9);
+    expect(costOfNext(def, 0, costRules(state)).toNumber()).toBeCloseTo(95, 9);
   });
 
   it('améliore la progression hors ligne', () => {

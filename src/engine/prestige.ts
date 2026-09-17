@@ -9,10 +9,11 @@ import type { GameState, PrestigeLayerState } from './state.ts';
 import { GENERATORS, type GeneratorId } from '../data/generators.ts';
 import {
   PRESTIGE_NODES_BY_ID, PRESTIGE_TREE, STAR_BASE_BONUS, STAR_DIVISOR,
-  type PrestigeNodeDef,
+  type PrestigeEffect, type PrestigeNodeDef,
 } from '../data/prestige.ts';
 import { OFFLINE_BASE_CAP_SECONDS, OFFLINE_BASE_EFFICIENCY } from '../data/config.ts';
 import { JACKPOT_SECONDS } from '../data/events.ts';
+import { CHALLENGES_BY_ID } from '../data/challenges.ts';
 
 /** Couche de prestige vide, utilisée tant que le joueur n'a jamais prestigé. */
 export const EMPTY_LAYER: PrestigeLayerState = {
@@ -64,11 +65,13 @@ export function totalForStars(stars: Decimal): Decimal {
 /* Effets de l'arbre                                                   */
 /* ------------------------------------------------------------------ */
 
-export type TreeEffects = {
+export type PermanentEffects = {
   globalMult: Decimal;
   clickMult: Decimal;
   /** Multiplicateur appliqué au coût des cuisines (1 = prix plein). */
   generatorCost: number;
+  /** Multiplicateur appliqué au coût des améliorations. */
+  upgradeCost: number;
   /** Bonus de production par Étoile non dépensée. */
   starBonus: number;
   offlineEfficiency: number;
@@ -84,10 +87,11 @@ export type TreeEffects = {
   autoBuyUpgrades: boolean;
 };
 
-const DEFAULT_EFFECTS: TreeEffects = {
+const DEFAULT_EFFECTS: PermanentEffects = {
   globalMult: ONE,
   clickMult: ONE,
   generatorCost: 1,
+  upgradeCost: 1,
   starBonus: STAR_BASE_BONUS,
   offlineEfficiency: OFFLINE_BASE_EFFICIENCY,
   offlineCapSeconds: OFFLINE_BASE_CAP_SECONDS,
@@ -102,25 +106,35 @@ const DEFAULT_EFFECTS: TreeEffects = {
 };
 
 /**
- * Agrège les effets des nœuds possédés.
+ * Agrège TOUS les effets permanents : nœuds de l'arbre de prestige et récompenses
+ * des défis validés. Point d'entrée unique, pour qu'aucune source d'effet ne puisse
+ * être oubliée par un appelant.
  *
  * Les effets « multiplicateurs » se multiplient entre eux ; les effets « valeur »
- * (rendement hors ligne, plafond, bonus par Étoile…) prennent le MEILLEUR nœud,
+ * (rendement hors ligne, plafond, bonus par Étoile…) prennent le MEILLEUR,
  * pour qu'acheter la version supérieure remplace la précédente au lieu de s'y ajouter.
  */
-export function treeEffects(state: GameState): TreeEffects {
+export function permanentEffects(state: GameState): PermanentEffects {
   const nodes = recipeLayer(state).nodes;
-  const ids = Object.keys(nodes);
-  if (ids.length === 0) return DEFAULT_EFFECTS;
-
-  const result: TreeEffects = { ...DEFAULT_EFFECTS, startGenerators: {} };
-  for (const id of ids) {
+  const challenges = Object.keys(state.challenges.completed);
+  const sources: PrestigeEffect[] = [];
+  for (const id of Object.keys(nodes)) {
     const effect = PRESTIGE_NODES_BY_ID[id]?.effect;
-    if (!effect) continue;
+    if (effect) sources.push(effect);
+  }
+  for (const id of challenges) {
+    const reward = CHALLENGES_BY_ID[id]?.reward;
+    if (reward) sources.push(reward);
+  }
+  if (sources.length === 0) return DEFAULT_EFFECTS;
+
+  const result: PermanentEffects = { ...DEFAULT_EFFECTS, startGenerators: {} };
+  for (const effect of sources) {
     switch (effect.type) {
       case 'globalMult': result.globalMult = result.globalMult.mul(effect.factor); break;
       case 'clickMult': result.clickMult = result.clickMult.mul(effect.factor); break;
       case 'generatorCost': result.generatorCost *= effect.factor; break;
+      case 'upgradeCost': result.upgradeCost *= effect.factor; break;
       case 'starBonus': result.starBonus = Math.max(result.starBonus, effect.perStar); break;
       case 'offlineEfficiency': result.offlineEfficiency = Math.max(result.offlineEfficiency, effect.value); break;
       case 'offlineCap': result.offlineCapSeconds = Math.max(result.offlineCapSeconds, effect.hours * 3600); break;
@@ -143,7 +157,7 @@ export function treeEffects(state: GameState): TreeEffects {
 export function starMultiplier(state: GameState): Decimal {
   const stars = recipeLayer(state).currency;
   if (stars.lte(0)) return ONE;
-  return ONE.add(stars.mul(treeEffects(state).starBonus));
+  return ONE.add(stars.mul(permanentEffects(state).starBonus));
 }
 
 /* ------------------------------------------------------------------ */
@@ -206,12 +220,18 @@ export type PrestigeResult = { state: GameState; gained: Decimal };
  * Remis à zéro : pizzas, cuisines, améliorations, statistiques de la run, pizzas d'or.
  * Conservé : hauts faits, drapeaux, statistiques globales, Étoiles et arbre, réglages.
  */
-export function doPrestige(state: GameState): PrestigeResult {
+/**
+ * Repart d'une partie neuve : pizzas, cuisines, améliorations et statistiques de run
+ * remises à zéro, cuisines et pizzas de départ de l'arbre appliquées, Étoiles méritées
+ * encaissées au passage.
+ *
+ * Partagé par le prestige et par l'entrée/sortie de défi, pour qu'il n'existe qu'une
+ * seule définition de « recommencer une partie ».
+ */
+export function resetRun(state: GameState): GameState {
   const gained = pendingStars(state);
-  if (gained.lt(1)) return { state, gained: ZERO };
-
   const layer = recipeLayer(state);
-  const effects = treeEffects(state);
+  const effects = permanentEffects(state);
 
   const generators = {} as GameState['generators'];
   for (const def of GENERATORS) {
@@ -225,37 +245,42 @@ export function doPrestige(state: GameState): PrestigeResult {
   }
 
   return {
-    gained,
-    state: {
-      ...state,
-      pizzas: D(effects.startPizzas),
-      generators,
-      upgrades: {},
-      events: {
-        nextSpawnAt: 0,
-        pending: null,
-        buffs: [],
-        clickBurst: { count: 0, since: 0 },
-      },
-      stats: {
-        ...state.stats,
-        playTimeRun: 0,
-        clicks: 0,
-        earnedRun: D(effects.startPizzas),
-        bestPizzas: D(effects.startPizzas),
-      },
-      prestige: {
-        ...state.prestige,
-        layers: {
-          ...state.prestige.layers,
-          recipe: {
-            ...layer,
-            currency: layer.currency.add(gained),
-            totalEarned: layer.totalEarned.add(gained),
-            resets: layer.resets + 1,
-          },
+    ...state,
+    pizzas: D(effects.startPizzas),
+    generators,
+    upgrades: {},
+    events: {
+      nextSpawnAt: 0,
+      pending: null,
+      buffs: [],
+      clickBurst: { count: 0, since: 0 },
+    },
+    automation: { clickCredit: 0, buyCooldown: 0 },
+    stats: {
+      ...state.stats,
+      playTimeRun: 0,
+      clicks: 0,
+      earnedRun: D(effects.startPizzas),
+      bestPizzas: D(effects.startPizzas),
+    },
+    prestige: {
+      ...state.prestige,
+      layers: {
+        ...state.prestige.layers,
+        recipe: {
+          ...layer,
+          currency: layer.currency.add(gained),
+          totalEarned: layer.totalEarned.add(gained),
+          // Une remise à zéro ne compte comme prestige que si elle rapporte une Étoile.
+          resets: gained.gte(1) ? layer.resets + 1 : layer.resets,
         },
       },
     },
   };
+}
+
+export function doPrestige(state: GameState): PrestigeResult {
+  const gained = pendingStars(state);
+  if (gained.lt(1)) return { state, gained: ZERO };
+  return { gained, state: resetRun(state) };
 }

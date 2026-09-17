@@ -11,6 +11,8 @@ import { addPizzas, updateUnlocks } from './core.ts';
 import { checkAchievements } from './achievements.ts';
 import { updateEvents } from './events.ts';
 import { runAutomation } from './automation.ts';
+import { checkChallengeCompletion } from './challenges.ts';
+import type { ChallengeDef } from '../data/challenges.ts';
 import { TICK_SECONDS } from '../data/config.ts';
 import type { AchievementDef } from '../data/achievements.ts';
 
@@ -27,6 +29,7 @@ export function tick(
   state: GameState,
   dt: number,
   onAchievement?: (achievements: AchievementDef[]) => void,
+  onChallenge?: (challenge: ChallengeDef) => void,
 ): GameState {
   if (!Number.isFinite(dt) || dt <= 0) return state;
 
@@ -47,7 +50,10 @@ export function tick(
 
   const checked = checkAchievements(next, production);
   if (checked.unlocked.length > 0 && onAchievement) onAchievement(checked.unlocked);
-  return checked.state;
+
+  const challenge = checkChallengeCompletion(checked.state);
+  if (challenge.completed && onChallenge) onChallenge(challenge.completed);
+  return challenge.state;
 }
 
 /**

@@ -58,7 +58,8 @@ src/
     upgrades.ts  déblocage, achat et lecture des effets des améliorations
     achievements.ts  évaluation des conditions, bonus de collection, drapeaux
     events.ts    pizzas d'or : apparition, expiration, effets temporaires
-    prestige.ts  Étoiles, arbre de compétences, remise à zéro
+    prestige.ts  Étoiles, arbre de compétences, resetRun / doPrestige
+    challenges.ts règles en vigueur, entrée, sortie et validation des défis
     automation.ts pétrisseur et acheteurs automatiques (arbre de prestige)
     format.ts    format() : standard / scientifique / ingénieur (+ formatInt, formatTime)
     rng.ts       RNG déterministe seedé (mulberry32), graine stockée dans l'état
@@ -75,6 +76,7 @@ src/
     achievements.ts 82 hauts faits, dont 8 cachés
     events.ts    les quatre pizzas d'or et leurs réglages
     prestige.ts  les 28 nœuds de l'arbre et la formule des Étoiles
+    challenges.ts les 8 défis : contrainte, objectif, récompense
     i18n/fr.ts   TOUS les textes affichés
   store/      pont entre le moteur et React
     gameLoop.ts  rAF + accumulateur à pas fixe, autosave, hors ligne, actions exposées
@@ -105,7 +107,12 @@ tests/        tests Vitest du moteur
    Ne jamais faire importer `tick.ts` par `actions.ts`.
 9. **L'automatisation passe par les mêmes actions que le joueur** (`clickDough`,
    `buyGenerator`, `buyUpgrade`) : aucune règle parallèle, donc aucune divergence possible.
-10. **Le joueur n'est jamais pénalisé pour son inaction.** Le seul effet négatif du jeu
+10. **Un seul point d'agrégation des effets permanents** : `permanentEffects()` de
+   `engine/prestige.ts`, qui fond ensemble les nœuds de l'arbre ET les récompenses des
+   défis. Ne jamais lire une source d'effet directement ailleurs.
+11. **Une seule définition de « recommencer une partie »** : `resetRun()`. Le prestige,
+   l'entrée et la sortie de défi l'utilisent tous les trois.
+12. **Le joueur n'est jamais pénalisé pour son inaction.** Le seul effet négatif du jeu
    (le contrôle d'hygiène) ne s'applique que si le joueur clique dessus, et il est
    visuellement distinct pour qu'il puisse choisir de l'ignorer.
 
@@ -166,6 +173,35 @@ Le simulateur applique la règle du cahier des charges : on prestige quand le ga
 **double le total d'Étoiles déjà gagnées** (pas la banque — sinon, comme l'arbre vide
 la banque, la règle dégénère en « prestige dès la première Étoile »).
 
+### Défis
+
+Un défi est une partie normale avec une contrainte (`ChallengeRules`) et un objectif
+en pizzas produites **pendant la run**. Entrer dans un défi ou en sortir passe par
+`resetRun()` : la partie repart de zéro et les Étoiles méritées sont encaissées au
+passage, donc essayer un défi ne fait jamais perdre de progression.
+
+- Ils s'ouvrent après **3 prestiges**.
+- La récompense est **permanente** : elle survit aux prestiges et aux autres défis,
+  et s'agrège dans `permanentEffects()` exactement comme un nœud d'arbre.
+- La validation est automatique dès l'objectif atteint ; le joueur sort quand il veut.
+- Une contrainte peut offrir une **mise de départ** (`startPizzas`). « Zéro clic » en a
+  besoin : sans clic ni pizzas, la première cuisine serait inachetable et le défi
+  mathématiquement impossible.
+
+Temps mesurés (`npm run sim -- --challenges`), **sans aucun nœud d'arbre ni récompense**,
+donc dans le pire cas possible pour le joueur :
+
+| Défi | Objectif | Terminé en |
+|---|---|---|
+| Zéro clic | 20 M | 26 min |
+| Sans apprenti | 200 M | 36 min |
+| Petit joueur | 500 M | 52 min |
+| Inflation | 30 M | 1 h 00 |
+| Sans livraison | 300 M | 1 h 14 |
+| Cuisine froide | 2 M | 1 h 15 |
+| Bricolage | 30 M | 1 h 17 |
+| Pâte pure | 400 M | 1 h 22 |
+
 ### Sauvegarde
 
 Clé `pizza-tycoon-save`, champ `version` + table `MIGRATIONS` appliquée en chaîne au chargement.
@@ -187,11 +223,10 @@ Une sauvegarde illisible n'est **jamais** écrasée : elle est recopiée dans
 | 1 | MVP : moteur, 10 cuisines, achat groupé, paliers, sauvegarde, hors ligne | ✅ |
 | 2 | Améliorations, synergies, pizzas d'or, 82 hauts faits, simulateur, direction visuelle | ✅ |
 | 3 | Prestige « Recette Secrète » (⭐ Étoiles), arbre de compétences, automatisation | ✅ |
-| 4 | 8 défis + récompenses | à venir |
+| 4 | 8 défis + récompenses | ✅ |
 | 5 | Prestige couche 2 « Expansion Mondiale » (villes), PWA, sons, déploiement GitHub Pages | à venir |
 
 Points d'extension déjà en place pour la suite :
-- `formulas.globalMultiplier()` : pipeline unique où brancher les défis de la Phase 4
-  (hauts faits, Étoiles et arbre y sont déjà branchés).
+- `formulas.globalMultiplier()` : pipeline unique (hauts faits, Étoiles, arbre, défis).
 - `state.prestige.layers` : dictionnaire prêt pour la couche 2 (`expansion`).
 - `engine/prestige.ts` : `doPrestige()` sert de modèle à la transcendance de la Phase 5.

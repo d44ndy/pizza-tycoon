@@ -11,6 +11,7 @@ import { GENERATORS, type GeneratorId } from '../data/generators.ts';
 import { UPGRADES_BY_ID } from '../data/upgrades.ts';
 import { ACHIEVEMENTS_BY_ID, type FlagId } from '../data/achievements.ts';
 import { PRESTIGE_NODES_BY_ID } from '../data/prestige.ts';
+import { CHALLENGES_BY_ID } from '../data/challenges.ts';
 import type { PrestigeLayerId, PrestigeLayerState } from './state.ts';
 import { SAVE_BACKUP_KEY, SAVE_KEY, SAVE_VERSION } from '../data/config.ts';
 
@@ -27,6 +28,8 @@ export type SaveData = {
   /** Hauts faits obtenus : identifiant -> instant d'obtention. */
   achievements: Record<string, number>;
   flags: string[];
+  /** Défi en cours et défis validés. */
+  challenges: { active: string | null; completed: Record<string, number> };
   /** Prochaine pizza d'or, en secondes de jeu. Les effets en cours ne sont pas sauvegardés. */
   nextEventAt: number;
   stats: {
@@ -63,6 +66,12 @@ const MIGRATIONS: Record<number, (save: SaveData) => SaveData> = {
     nextEventAt: 0,
     stats: { ...save.stats, eventsClicked: 0 },
   }),
+  // v2 (Phase 2) -> v3 (Phase 4) : arrivée des défis.
+  2: (save) => ({
+    ...save,
+    version: 3,
+    challenges: { active: null, completed: {} },
+  }),
 };
 
 /* ------------------------------------------------------------------ */
@@ -94,6 +103,10 @@ export function toSaveData(state: GameState, now: number = Date.now()): SaveData
     upgrades: Object.keys(state.upgrades),
     achievements: { ...state.achievements },
     flags: Object.keys(state.flags),
+    challenges: {
+      active: state.challenges.active,
+      completed: { ...state.challenges.completed },
+    },
     nextEventAt: state.events.nextSpawnAt,
     stats: {
       createdAt: state.stats.createdAt,
@@ -211,6 +224,17 @@ export function fromSaveData(raw: unknown): GameState {
     };
   }
 
+  // Défis : on ignore les identifiants inconnus, et un défi en cours qui n'existe
+  // plus se solde par un retour au monde normal plutôt que par un blocage.
+  const completedChallenges: Record<string, number> = {};
+  for (const [id, at] of Object.entries(migrated.challenges?.completed ?? {})) {
+    if (CHALLENGES_BY_ID[id]) completedChallenges[id] = num(at, 0);
+  }
+  const activeChallengeId = migrated.challenges?.active;
+  const active = typeof activeChallengeId === 'string' && CHALLENGES_BY_ID[activeChallengeId]
+    ? activeChallengeId
+    : null;
+
   const s = migrated.stats;
   const state: GameState = {
     ...base,
@@ -224,6 +248,7 @@ export function fromSaveData(raw: unknown): GameState {
       ...base.events,
       nextSpawnAt: Math.max(0, num(migrated.nextEventAt, 0)),
     },
+    challenges: { active, completed: completedChallenges },
     stats: {
       createdAt: num(s?.createdAt, base.stats.createdAt),
       playTimeRun: Math.max(0, num(s?.playTimeRun, 0)),

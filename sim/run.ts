@@ -9,11 +9,15 @@
  * Options :
  *   node sim/run.ts --hours 12 --clicks 3 --no-events
  *   node sim/run.ts --hours 8 --click-minutes 2      (joueur idle : il lance la partie puis laisse tourner)
+ *   node sim/run.ts --challenge inflation            (un défi précis, sans aide de l'arbre)
+ *   node sim/run.ts --challenges                     (les huit défis à la suite)
  */
-import type { Decimal } from '../src/engine/decimal.ts';
+import { D, type Decimal } from '../src/engine/decimal.ts';
 import { createInitialState, type GameState } from '../src/engine/state.ts';
 import { GENERATORS, type GeneratorId } from '../src/data/generators.ts';
-import { costOfNext, totalProduction } from '../src/engine/formulas.ts';
+import { costOfNext, costRules, totalProduction } from '../src/engine/formulas.ts';
+import { currentRules, enterChallenge, isGeneratorAllowed } from '../src/engine/challenges.ts';
+import { CHALLENGES, CHALLENGES_BY_ID } from '../src/data/challenges.ts';
 import { buyGenerator, catchEvent, clickDough } from '../src/engine/actions.ts';
 import { availableUpgrades, buyUpgrade, upgradesOwnedCount } from '../src/engine/upgrades.ts';
 import { achievementsOwnedCount } from '../src/engine/achievements.ts';
@@ -56,7 +60,8 @@ type Candidate = { kind: 'generator'; id: GeneratorId } | { kind: 'upgrade'; id:
 function valueOf(state: GameState, candidate: Candidate, current: Decimal): { ratio: number; cost: Decimal } | null {
   if (candidate.kind === 'generator') {
     const def = GENERATORS.find((g) => g.id === candidate.id)!;
-    const cost = costOfNext(def, state.generators[candidate.id].owned);
+    if (!isGeneratorAllowed(currentRules(state), def)) return null;
+    const cost = costOfNext(def, state.generators[candidate.id].owned, costRules(state));
     if (cost.gt(state.pizzas)) return null;
     const after = totalProduction({
       ...state,
@@ -100,6 +105,54 @@ function spend(state: GameState): GameState {
       : buyUpgrade(current, best.candidate.id).state;
   }
   return current;
+}
+
+/* ------------------------------------------------------------------ */
+/* Mode « défis » : chaque défi est-il terminable, et en combien de temps ? */
+/* ------------------------------------------------------------------ */
+
+function argString(name: string): string | null {
+  const i = process.argv.indexOf(`--${name}`);
+  return i === -1 ? null : process.argv[i + 1] ?? null;
+}
+
+/**
+ * Rejoue un défi depuis une partie neuve, SANS aucun nœud d'arbre ni récompense :
+ * si l'objectif tombe dans ces conditions, il tombera a fortiori pour un joueur
+ * qui arrive après trois prestiges.
+ */
+function runChallenge(id: string, maxHours: number): { id: string; name: string; at: number | null; production: Decimal } {
+  const def = CHALLENGES_BY_ID[id]!;
+  let state = createInitialState(0, SEED);
+  state = enterChallenge({ ...state, prestige: { layers: { recipe: { currency: D(0), totalEarned: D(0), resets: 3, nodes: {} } } } }, id);
+
+  for (let t = 0; t < maxHours * 3600; t += STEP) {
+    for (let c = 0; c < CLICKS_PER_SECOND * STEP; c++) state = clickDough(state);
+    if (CATCH_EVENTS && state.events.pending) state = catchEvent(state).state;
+    state = tick(state, STEP);
+    state = spend(state);
+    if (state.stats.earnedRun.gte(def.goal)) {
+      return { id, name: def.name, at: t, production: totalProduction(state) };
+    }
+  }
+  return { id, name: def.name, at: null, production: totalProduction(state) };
+}
+
+const challengeArg = argString('challenge');
+if (challengeArg || process.argv.includes('--challenges')) {
+  const list = challengeArg ? [CHALLENGES_BY_ID[challengeArg]!] : CHALLENGES;
+  console.log(`\n=== Défis — ${CLICKS_PER_SECOND} clic/s, aucune aide de l'arbre, plafond ${HOURS} h ===\n`);
+  console.log('DÉFI                 OBJECTIF      TERMINÉ EN     PRODUCTION FINALE');
+  console.log('─'.repeat(74));
+  for (const def of list) {
+    const result = runChallenge(def.id, HOURS);
+    console.log(
+      `${def.name.padEnd(21)}${format(def.goal).padEnd(14)}`
+      + `${(result.at === null ? 'JAMAIS' : formatTime(result.at)).padEnd(15)}${format(result.production)}/s`,
+    );
+  }
+  console.log('');
+  process.exit(0);
 }
 
 /* ------------------------------------------------------------------ */

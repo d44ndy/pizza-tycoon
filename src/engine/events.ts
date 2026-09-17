@@ -12,7 +12,7 @@ import {
   EVENTS, EVENTS_BY_KIND, EVENT_LIFETIME, EVENT_MAX_DELAY, EVENT_MIN_DELAY,
   JACKPOT_STOCK_RATIO, type EventKind,
 } from '../data/events.ts';
-import { treeEffects } from './prestige.ts';
+import { permanentEffects } from './prestige.ts';
 
 const TOTAL_WEIGHT = EVENTS.reduce((sum, e) => sum + e.weight, 0);
 
@@ -83,7 +83,7 @@ export function updateEvents(state: GameState): GameState {
 
   // 3. Première planification (ou apparition due). L'arbre de prestige peut
   //    raccourcir le délai entre deux pizzas d'or.
-  const frequency = treeEffects(state).eventFrequency;
+  const frequency = permanentEffects(state).eventFrequency;
   if (events.nextSpawnAt <= 0) {
     const delay = nextRange(rng, EVENT_MIN_DELAY * frequency, EVENT_MAX_DELAY * frequency);
     rng = delay.next;
@@ -124,7 +124,7 @@ export function clickPendingEvent(state: GameState, production: Decimal): EventC
   if (!pending) return { state, kind: null, gained: ZERO };
 
   const def = EVENTS_BY_KIND[pending.kind];
-  const effects = treeEffects(state);
+  const effects = permanentEffects(state);
   const now = state.stats.playTimeTotal;
   let next: GameState = {
     ...state,

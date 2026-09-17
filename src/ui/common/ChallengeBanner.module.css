@@ -1,0 +1,46 @@
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 5px 12px 6px;
+  background: var(--tom);
+  color: var(--tom-ink);
+  border: 2px solid var(--line);
+  border-radius: 2px;
+  box-shadow: var(--shadow-sm);
+}
+
+.banner[data-done='true'] {
+  background: var(--bas);
+}
+
+.name {
+  font-family: 'Alfa Slab One', Georgia, serif;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+.status {
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.track {
+  width: 100%;
+  max-width: 260px;
+  height: 5px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1.5px solid var(--line);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  width: calc(var(--ratio) * 100%);
+  background: var(--tom-ink);
+  transition: width 0.2s steps(6);
+}

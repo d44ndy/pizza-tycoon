@@ -20,6 +20,8 @@ import { tick } from '../engine/tick.ts';
 import { buyGenerator, catchEvent, clickDough } from '../engine/actions.ts';
 import { buyUpgrade } from '../engine/upgrades.ts';
 import { buyNode, doPrestige } from '../engine/prestige.ts';
+import { enterChallenge, exitChallenge } from '../engine/challenges.ts';
+import type { ChallengeDef } from '../data/challenges.ts';
 import { raiseFlag } from '../engine/achievements.ts';
 import { clearBuffs } from '../engine/events.ts';
 import type { FlagId } from '../data/achievements.ts';
@@ -103,6 +105,16 @@ export function doBuyNode(id: string): void {
   saveNow();
 }
 
+export function doEnterChallenge(id: string): void {
+  dispatch((state) => enterChallenge(state, id));
+  saveNow();
+}
+
+export function doExitChallenge(): void {
+  dispatch(exitChallenge);
+  saveNow();
+}
+
 /** Déclenche un fait marquant depuis l'interface (œuf de Pâques, horloge système…). */
 export function doRaiseFlag(flag: FlagId): void {
   dispatch((state) => raiseFlag(state, flag));
@@ -151,6 +163,15 @@ function announce(unlocked: AchievementDef[]): void {
   }
 }
 
+/** Notifie l'interface qu'un défi vient d'être relevé. */
+function announceChallenge(challenge: ChallengeDef): void {
+  useGameStore.getState().pushToast({
+    kind: 'achievement',
+    title: t.challenges.toast,
+    text: challenge.name,
+  });
+}
+
 /** Haut fait caché : jouer entre 3 h et 4 h du matin (l'heure système, pas le temps de jeu). */
 function checkWallClock(): void {
   if (new Date().getHours() === 3 && current.flags.nightOwl !== true) {
@@ -174,7 +195,7 @@ function frame(nowMs: number): void {
     accumulator += dt;
     let steps = 0;
     while (accumulator >= TICK_SECONDS && steps < 240) {
-      current = tick(current, TICK_SECONDS, announce);
+      current = tick(current, TICK_SECONDS, announce, announceChallenge);
       accumulator -= TICK_SECONDS;
       steps++;
     }

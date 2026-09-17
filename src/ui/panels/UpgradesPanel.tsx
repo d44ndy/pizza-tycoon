@@ -5,7 +5,7 @@
  */
 import { t } from '../../data/i18n/fr.ts';
 import type { UpgradeDef } from '../../data/upgrades.ts';
-import { availableUpgrades, ownedUpgrades } from '../../engine/upgrades.ts';
+import { availableUpgrades, ownedUpgrades, upgradeCost } from '../../engine/upgrades.ts';
 import { doBuyUpgrade } from '../../store/gameLoop.ts';
 import { useGameStore } from '../../store/gameStore.ts';
 import { Tooltip } from '../common/Tooltip.tsx';
@@ -28,7 +28,12 @@ export function UpgradesPanel() {
 
       <div className={styles.list}>
         {available.map((def) => (
-          <UpgradeCard key={def.id} def={def} affordable={state.pizzas.gte(def.cost)} cost={fmt(def.cost)} />
+          <UpgradeCard
+            key={def.id}
+            def={def}
+            affordable={state.pizzas.gte(upgradeCost(state, def))}
+            cost={fmt(upgradeCost(state, def))}
+          />
         ))}
       </div>
 

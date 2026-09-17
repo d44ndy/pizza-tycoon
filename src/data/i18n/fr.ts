@@ -19,6 +19,7 @@ export const fr = {
     game: 'Jeu',
     succes: 'Hauts faits',
     prestige: 'Recette Secrète',
+    defis: 'Défis',
     stats: 'Stats',
     options: 'Options',
   },
@@ -101,6 +102,35 @@ export const fr = {
       'Brûle ton empire et recommence avec une meilleure recette. '
       + 'Plus tu auras produit de pizzas, plus tu gagneras d’Étoiles.',
   },
+  challenges: {
+    title: 'Défis',
+    intro:
+      'Un défi est une partie normale avec une contrainte. L’objectif atteint, '
+      + 'la récompense est acquise pour toujours — même après un prestige.',
+    locked: (resets: number) => `Les défis s’ouvrent après ${resets} recettes secrètes.`,
+    progress: (done: number, total: number) => `${done} / ${total} défis relevés`,
+    constraint: 'Contrainte',
+    goal: 'Objectif',
+    goalValue: (amount: string) => `produire ${amount} pizzas dans la partie`,
+    reward: 'Récompense',
+    enter: 'Relever le défi',
+    exit: 'Quitter le défi',
+    active: 'En cours',
+    done: 'Relevé',
+    warnTitle: 'Relever ce défi ?',
+    warnBody:
+      'Ta partie en cours repart de zéro (tes Étoiles méritées sont encaissées au passage). '
+      + 'Tu pourras quitter le défi quand tu veux.',
+    warnAction: 'Recommencer sous contrainte',
+    exitTitle: 'Quitter le défi ?',
+    exitBody: 'La partie repart de zéro, sans la contrainte. Ta récompense reste acquise si tu l’as validée.',
+    exitAction: 'Quitter et recommencer',
+    cancel: 'Annuler',
+    bannerActive: (name: string) => `Défi : ${name}`,
+    bannerRemaining: (amount: string) => `encore ${amount} pizzas`,
+    bannerDone: 'Objectif atteint !',
+    toast: 'Défi relevé !',
+  },
   events: {
     catch: 'Attraper',
     caught: (name: string) => `${name} !`,
@@ -126,6 +156,7 @@ export const fr = {
     stars: 'Étoiles en réserve',
     starBonus: 'Bonus des Étoiles',
     prestigeCount: 'Recettes secrètes',
+    challengesDone: 'Défis relevés',
     eventsClicked: 'Pizzas d’or attrapées',
     clickPower: 'Valeur d’un pétrissage',
     createdAt: 'Partie commencée le',
