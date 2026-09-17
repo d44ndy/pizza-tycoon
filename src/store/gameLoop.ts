@@ -21,6 +21,8 @@ import { buyGenerator, catchEvent, clickDough } from '../engine/actions.ts';
 import { buyUpgrade } from '../engine/upgrades.ts';
 import { buyNode, doPrestige } from '../engine/prestige.ts';
 import { enterChallenge, exitChallenge } from '../engine/challenges.ts';
+import { doTranscend, upgradeCity } from '../engine/expansion.ts';
+import type { CityId } from '../data/cities.ts';
 import type { ChallengeDef } from '../data/challenges.ts';
 import { raiseFlag } from '../engine/achievements.ts';
 import { clearBuffs } from '../engine/events.ts';
@@ -102,6 +104,21 @@ export function doPrestigeNow(): Decimal | null {
 
 export function doBuyNode(id: string): void {
   dispatch((state) => buyNode(state, id).state);
+  saveNow();
+}
+
+/** Transcende : efface toute la couche 1 contre des Contrats. Sauvegarde aussitôt. */
+export function doTranscendNow(): Decimal | null {
+  const result = doTranscend(current);
+  if (result.gained.lte(0)) return null;
+  current = result.state;
+  saveNow();
+  publish();
+  return result.gained;
+}
+
+export function doUpgradeCity(id: CityId): void {
+  dispatch((state) => upgradeCity(state, id).state);
   saveNow();
 }
 

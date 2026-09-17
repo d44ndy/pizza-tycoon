@@ -14,6 +14,7 @@ type Props = {
   showAchievements: boolean;
   showPrestige: boolean;
   showChallenges: boolean;
+  showExpansion: boolean;
   prestigeReady: boolean;
 };
 
@@ -22,16 +23,20 @@ const TABS: Array<[TabId, string, PictoName]> = [
   ['succes', t.tabs.succes, 'trophy'],
   ['prestige', t.tabs.prestige, 'sparkle'],
   ['defis', t.tabs.defis, 'trophy'],
+  ['expansion', t.tabs.expansion, 'plasma'],
   ['stats', t.tabs.stats, 'recette'],
   ['options', t.tabs.options, 'synergy'],
 ];
 
-export function Tabs({ showAchievements, showPrestige, showChallenges, prestigeReady }: Props) {
+export function Tabs({
+  showAchievements, showPrestige, showChallenges, showExpansion, prestigeReady,
+}: Props) {
   const tab = useGameStore((s) => s.state.ui.tab);
   const visible = TABS.filter(([id]) => {
     if (id === 'succes') return showAchievements;
     if (id === 'prestige') return showPrestige;
     if (id === 'defis') return showChallenges;
+    if (id === 'expansion') return showExpansion;
     return true;
   });
 

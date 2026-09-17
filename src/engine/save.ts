@@ -11,6 +11,7 @@ import { GENERATORS, type GeneratorId } from '../data/generators.ts';
 import { UPGRADES_BY_ID } from '../data/upgrades.ts';
 import { ACHIEVEMENTS_BY_ID, type FlagId } from '../data/achievements.ts';
 import { PRESTIGE_NODES_BY_ID } from '../data/prestige.ts';
+import { CITIES_BY_ID, type CityId } from '../data/cities.ts';
 import { CHALLENGES_BY_ID } from '../data/challenges.ts';
 import type { PrestigeLayerId, PrestigeLayerState } from './state.ts';
 import { SAVE_BACKUP_KEY, SAVE_KEY, SAVE_VERSION } from '../data/config.ts';
@@ -212,9 +213,14 @@ export function fromSaveData(raw: unknown): GameState {
   const layers: Partial<Record<PrestigeLayerId, PrestigeLayerState>> = {};
   for (const [id, saved] of Object.entries(migrated.prestige?.layers ?? {})) {
     if (id !== 'recipe' && id !== 'expansion') continue;
+    // Chaque couche a son propre catalogue : nœuds d'arbre pour « recipe »,
+    // villes pour « expansion ». Un identifiant inconnu est ignoré.
+    const known = (nodeId: string) => (id === 'recipe'
+      ? PRESTIGE_NODES_BY_ID[nodeId] !== undefined
+      : CITIES_BY_ID[nodeId as CityId] !== undefined);
     const nodes: Record<string, number> = {};
     for (const [nodeId, level] of Object.entries(saved?.nodes ?? {})) {
-      if (PRESTIGE_NODES_BY_ID[nodeId]) nodes[nodeId] = Math.max(1, Math.floor(num(level, 1)));
+      if (known(nodeId)) nodes[nodeId] = Math.max(1, Math.floor(num(level, 1)));
     }
     layers[id] = {
       currency: dec(saved?.currency),

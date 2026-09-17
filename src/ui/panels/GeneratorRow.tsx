@@ -12,6 +12,7 @@ import { ProgressBar } from '../common/ProgressBar.tsx';
 import { Tooltip } from '../common/Tooltip.tsx';
 import { Picto } from '../icons/Picto.tsx';
 import { useFormat } from '../useFormat.ts';
+import { useSound } from '../useSound.ts';
 import styles from './GeneratorRow.module.css';
 
 type Props = { def: GeneratorDef };
@@ -19,6 +20,7 @@ type Props = { def: GeneratorDef };
 export function GeneratorRow({ def }: Props) {
   const state = useGameStore((s) => s.state);
   const { fmt, fmtInt } = useFormat();
+  const sound = useSound();
 
   const gs = state.generators[def.id];
   const bulk = resolveBulk(def, gs.owned, state.pizzas, state.settings.bulkMode, costRules(state));
@@ -31,7 +33,10 @@ export function GeneratorRow({ def }: Props) {
       <button
         type="button"
         className={styles.main}
-        onClick={() => doBuy(def.id)}
+        onClick={() => {
+          doBuy(def.id);
+          sound('buy');
+        }}
         disabled={!bulk.affordable}
       >
         <span className={styles.picto}>

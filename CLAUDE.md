@@ -14,6 +14,7 @@ Thème : de l'apprenti pizzaïolo dans un garage au four à plasma orbital.
 | `npm run build` | typecheck + build de production dans `dist/` |
 | `npm run sim` | simulateur d'équilibrage (options : `--hours`, `--clicks`, `--click-minutes`, `--no-events`, `--seed`) |
 | `npm run preview` | sert le build de production |
+| `npm run deploy` | publie `dist/` sur la branche `gh-pages` (voir README) |
 
 À faire avant chaque commit : `npm test` **et** `npm run build`.
 
@@ -27,7 +28,12 @@ Thème : de l'apprenti pizzaïolo dans un garage au four à plasma orbital.
   d'animations pilotés par des tokens sur `:root[data-theme]`
 - **@fontsource/alfa-slab-one** et **@fontsource-variable/archivo** (licence OFL) :
   typographies auto-hébergées, pour que le jeu reste identique hors ligne (PWA en Phase 5)
+- **vite-plugin-pwa** : service worker, manifeste et précache complet (polices incluses),
+  donc jouable hors connexion et installable
+- **gh-pages** (dev) : publication sur GitHub Pages
 - Sauvegarde : `localStorage` + export/import base64. Aucun backend, aucune dépendance payante.
+- **Sons entièrement synthétisés** en Web Audio (`src/ui/sound.ts`) : aucun fichier audio
+  à charger ni à précacher, et le jeu reste identique hors ligne. Coupés par défaut.
 
 ## Direction visuelle — « Carton & tampon »
 
@@ -60,6 +66,7 @@ src/
     events.ts    pizzas d'or : apparition, expiration, effets temporaires
     prestige.ts  Étoiles, arbre de compétences, resetRun / doPrestige
     challenges.ts règles en vigueur, entrée, sortie et validation des défis
+    expansion.ts  couche 2 : Contrats, villes, transcendance
     automation.ts pétrisseur et acheteurs automatiques (arbre de prestige)
     format.ts    format() : standard / scientifique / ingénieur (+ formatInt, formatTime)
     rng.ts       RNG déterministe seedé (mulberry32), graine stockée dans l'état
@@ -77,12 +84,15 @@ src/
     events.ts    les quatre pizzas d'or et leurs réglages
     prestige.ts  les 28 nœuds de l'arbre et la formule des Étoiles
     challenges.ts les 8 défis : contrainte, objectif, récompense
+    cities.ts    les 6 villes de la couche 2 et leurs effets
     i18n/fr.ts   TOUS les textes affichés
   store/      pont entre le moteur et React
     gameLoop.ts  rAF + accumulateur à pas fixe, autosave, hors ligne, actions exposées
     gameStore.ts store Zustand : instantané publié à 10 fps
   ui/         composants React (CSS Modules à côté de chaque composant)
     icons/       pictogrammes SVG maison
+    sound.ts     sons synthétisés (Web Audio), aucun fichier externe
+public/       icônes PWA (générées depuis public/icon.svg)
 sim/          simulateur d'équilibrage headless (npm run sim)
 tests/        tests Vitest du moteur
 ```
@@ -202,6 +212,32 @@ donc dans le pire cas possible pour le joueur :
 | Bricolage | 30 M | 1 h 17 |
 | Pâte pure | 400 M | 1 h 22 |
 
+### Expansion Mondiale — la couche 2
+
+Contrats = `floor(cbrt(cumul de pizzas de TOUTE la partie / 2e12))`, moins ceux déjà
+signés. Transcender efface **toute la couche 1** — pizzas, cuisines, améliorations,
+Étoiles et arbre — et conserve hauts faits, défis relevés, villes et statistiques globales.
+
+Les Contrats fondent et agrandissent **6 villes**. Une ville :
+- produit en parallèle des cuisines, et **ne repart jamais de zéro** (ni au prestige,
+  ni en défi) : c'est elle qui relance chaque nouvelle partie ;
+- porte un effet passif proportionnel à son niveau (production des cuisines, pétrissage,
+  coût, fréquence des pizzas d'or, hors ligne, production des autres villes) ;
+- se fonde dans l'ordre : Naples, Chicago, Tokyo, Paris, São Paulo, Station orbitale.
+
+Les effets qui dégénéreraient sont plafonnés dans `CITY_CAPS` (coûts, fréquence
+des événements, rendement hors ligne).
+
+Mesures (joueur actif, `--hours 96 --step 10`) : 1er Contrat mérité à **10 h 09**.
+Le simulateur transcende dès qu'il le peut et signe donc 4 Contrats en 4 jours ; un
+joueur avisé attend plutôt une poignée de Contrats (~2 jours de jeu actif) avant de
+tout effacer, puisque la racine cubique récompense la patience. En rythme idle, cela
+place l'ouverture de la couche 2 autour de 2 à 4 jours, comme prévu au cahier des charges.
+
+> Le diviseur valait 1e15 dans la première version : la première transcendance ne
+> rapportait alors qu'UN Contrat pour deux jours de jeu effacés. Personne n'aurait
+> accepté ce marché.
+
 ### Sauvegarde
 
 Clé `pizza-tycoon-save`, champ `version` + table `MIGRATIONS` appliquée en chaîne au chargement.
@@ -224,9 +260,10 @@ Une sauvegarde illisible n'est **jamais** écrasée : elle est recopiée dans
 | 2 | Améliorations, synergies, pizzas d'or, 82 hauts faits, simulateur, direction visuelle | ✅ |
 | 3 | Prestige « Recette Secrète » (⭐ Étoiles), arbre de compétences, automatisation | ✅ |
 | 4 | 8 défis + récompenses | ✅ |
-| 5 | Prestige couche 2 « Expansion Mondiale » (villes), PWA, sons, déploiement GitHub Pages | à venir |
+| 5 | Prestige couche 2 « Expansion Mondiale » (villes), PWA, sons, déploiement GitHub Pages | ✅ |
 
-Points d'extension déjà en place pour la suite :
-- `formulas.globalMultiplier()` : pipeline unique (hauts faits, Étoiles, arbre, défis).
-- `state.prestige.layers` : dictionnaire prêt pour la couche 2 (`expansion`).
-- `engine/prestige.ts` : `doPrestige()` sert de modèle à la transcendance de la Phase 5.
+Le jeu est complet. Pour aller plus loin, les points d'extension restent les mêmes :
+- `formulas.globalMultiplier()` : pipeline unique (hauts faits, Étoiles, arbre, défis, villes).
+- `permanentEffects()` : agrège arbre, récompenses de défis et effets de villes.
+- `state.prestige.layers` : le dictionnaire accepte une couche 3 sans rien casser.
+- `data/i18n/fr.ts` : tous les textes sont déjà centralisés pour une traduction.

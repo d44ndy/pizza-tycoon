@@ -25,6 +25,11 @@ import {
   buyNode, canBuyNode, doPrestige, pendingStars, recipeLayer,
 } from '../src/engine/prestige.ts';
 import { PRESTIGE_TREE } from '../src/data/prestige.ts';
+import {
+  canTranscend, canUpgradeCity, cityUpgradeCost, doTranscend, pendingContracts, totalCityLevels, upgradeCity,
+} from '../src/engine/expansion.ts';
+import { expansionLayer } from '../src/engine/prestige.ts';
+import { CITIES } from '../src/data/cities.ts';
 import { tick } from '../src/engine/tick.ts';
 import { format, formatTime } from '../src/engine/format.ts';
 
@@ -189,6 +194,28 @@ function spendStars(state: GameState): GameState {
   return current;
 }
 
+/** Achète les villes abordables, la moins chère d'abord. */
+function spendContracts(state: GameState): GameState {
+  let current = state;
+  for (let guard = 0; guard < 40; guard++) {
+    const candidates = CITIES
+      .filter((city) => canUpgradeCity(current, city))
+      .sort((a, b) => cityUpgradeCost(current, a) - cityUpgradeCost(current, b));
+    const cheapest = candidates[0];
+    if (!cheapest) return current;
+    current = upgradeCity(current, cheapest.id).state;
+  }
+  return current;
+}
+
+/** Même règle que pour le prestige : on transcende quand le gain double le total. */
+function shouldTranscend(state: GameState): boolean {
+  if (!canTranscend(state)) return false;
+  const earned = expansionLayer(state).totalEarned;
+  const gain = pendingContracts(state);
+  return earned.lte(0) ? gain.gte(1) : gain.gte(earned);
+}
+
 /**
  * Règle de prestige : on recommence dès que le gain double les Étoiles en banque
  * (et au moins 1 Étoile au premier passage).
@@ -204,7 +231,8 @@ function shouldPrestige(state: GameState): boolean {
 
 let state = createInitialState(0, SEED);
 const timeline: Array<{
-  t: number; prod: Decimal; total: Decimal; ach: number; up: number; etoiles: number; noeuds: number;
+  t: number; prod: Decimal; total: Decimal; ach: number; up: number;
+  etoiles: number; noeuds: number; contrats: number; villes: number;
 }> = [];
 
 for (let t = 0; t < HOURS * 3600; t += STEP) {
@@ -217,7 +245,17 @@ for (let t = 0; t < HOURS * 3600; t += STEP) {
 
   if (pendingStars(state).gte(1)) record('1re Étoile (prestige possible)', t);
 
-  if (PRESTIGE && shouldPrestige(state)) {
+  if (pendingContracts(state).gte(1)) record('1er Contrat mérité', t);
+
+  if (PRESTIGE && shouldTranscend(state)) {
+    const before = expansionLayer(state).resets;
+    state = doTranscend(state).state;
+    state = spendContracts(state);
+    record(`transcendance n°${before + 1}`, t);
+    for (const city of CITIES) {
+      if ((expansionLayer(state).nodes[city.id] ?? 0) > 0) record(`ville · ${city.name}`, t);
+    }
+  } else if (PRESTIGE && shouldPrestige(state)) {
     const before = recipeLayer(state).resets;
     state = doPrestige(state).state;
     state = spendStars(state);
@@ -239,6 +277,8 @@ for (let t = 0; t < HOURS * 3600; t += STEP) {
       ach: achievementsOwnedCount(state), up: upgradesOwnedCount(state),
       etoiles: recipeLayer(state).currency.toNumber(),
       noeuds: Object.keys(recipeLayer(state).nodes).length,
+      contrats: expansionLayer(state).currency.toNumber(),
+      villes: totalCityLevels(state),
     });
   }
 }
@@ -283,17 +323,19 @@ for (const [label, [min, max]] of Object.entries(REPERES)) {
 }
 
 console.log('\nPROGRESSION');
-console.log('TEMPS        PRODUCTION/S        CUMUL              HAUTS FAITS   AMÉLIOR.   ÉTOILES   NŒUDS');
+console.log('TEMPS        PRODUCTION/S        CUMUL              H.FAITS  AMÉL.  ÉTOILES  NŒUDS  CONTRATS  NIV. VILLES');
 console.log('─'.repeat(96));
 for (const row of timeline) {
   console.log(
     `${formatTime(row.t).padEnd(13)}${format(row.prod).padEnd(20)}${format(row.total).padEnd(19)}`
-    + `${String(row.ach).padEnd(14)}${String(row.up).padEnd(11)}${String(row.etoiles).padEnd(10)}${row.noeuds}`,
+    + `${String(row.ach).padEnd(9)}${String(row.up).padEnd(7)}${String(row.etoiles).padEnd(9)}`
+    + `${String(row.noeuds).padEnd(7)}${String(row.contrats).padEnd(10)}${row.villes}`,
   );
 }
 
 console.log(`\nÉtat final : ${format(state.pizzas)} pizzas en stock, ${format(totalProduction(state))}/s, `
   + `${stars(state)} Étoiles en banque (${recipeLayer(state).resets} prestiges, `
   + `${Object.keys(recipeLayer(state).nodes).length}/${PRESTIGE_TREE.length} nœuds), `
-  + `${achievementsOwnedCount(state)} hauts faits, ${upgradesOwnedCount(state)} améliorations.`);
+  + `${achievementsOwnedCount(state)} hauts faits, ${upgradesOwnedCount(state)} améliorations, `
+  + `${expansionLayer(state).resets} transcendances, ${totalCityLevels(state)} niveaux de ville.`);
 console.log(`Cuisines : ${GENERATORS.map((g) => `${g.name.split(' ')[0]} ${state.generators[g.id].owned}`).join(' · ')}\n`);

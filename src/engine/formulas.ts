@@ -9,7 +9,8 @@ import { GENERATORS, GENERATORS_BY_ID, type GeneratorDef, type GeneratorId } fro
 import { UPGRADES_BY_ID } from '../data/upgrades.ts';
 import { achievementMultiplier } from './achievements.ts';
 import { eventClickMultiplier, eventProductionMultiplier } from './events.ts';
-import { starMultiplier, permanentEffects } from './prestige.ts';
+import { starMultiplier, permanentEffects, cityLevel } from './prestige.ts';
+import { CITIES } from '../data/cities.ts';
 import { currentRules, isGeneratorAllowed } from './challenges.ts';
 import {
   BASE_CLICK_POWER, COST_GROWTH, MILESTONE_MULTIPLIER, UNLOCK_RATIO,
@@ -149,7 +150,7 @@ export function globalMultiplier(state: GameState): Decimal {
     .mul(currentRules(state).productionFactor);
 }
 
-/** Production d'un générateur, pizzas par seconde, tous multiplicateurs inclus. */
+/** Production d'une cuisine, pizzas par seconde, tous multiplicateurs inclus. */
 export function generatorProduction(state: GameState, id: GeneratorId): Decimal {
   const gs = state.generators[id];
   if (gs.owned === 0) return ZERO;
@@ -157,16 +158,37 @@ export function generatorProduction(state: GameState, id: GeneratorId): Decimal 
   return def.baseProduction
     .mul(gs.owned)
     .mul(generatorMultiplier(state, id))
-    .mul(globalMultiplier(state));
+    .mul(globalMultiplier(state))
+    // Bonus réservé aux cuisines (Naples).
+    .mul(permanentEffects(state).kitchenMult);
 }
 
-/** Production totale du joueur, pizzas par seconde. */
-export function totalProduction(state: GameState): Decimal {
+/** Production des cuisines seules. */
+export function kitchenProduction(state: GameState): Decimal {
   let total = ZERO;
   for (const def of GENERATORS) {
     total = total.add(generatorProduction(state, def.id));
   }
   return total;
+}
+
+/**
+ * Production des villes (couche 2). Elle tourne en parallèle des cuisines et
+ * survit à tous les prestiges : c'est elle qui relance chaque nouvelle partie.
+ */
+export function cityProduction(state: GameState): Decimal {
+  let base = ZERO;
+  for (const def of CITIES) {
+    const level = cityLevel(state, def.id);
+    if (level > 0) base = base.add(def.baseProduction.mul(level));
+  }
+  if (base.lte(0)) return ZERO;
+  return base.mul(permanentEffects(state).cityMult).mul(globalMultiplier(state));
+}
+
+/** Production totale du joueur, pizzas par seconde : cuisines + villes. */
+export function totalProduction(state: GameState): Decimal {
+  return kitchenProduction(state).add(cityProduction(state));
 }
 
 /**

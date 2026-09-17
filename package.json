@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "sim": "node sim/run.ts"
+    "sim": "node sim/run.ts",
+    "deploy": "npm run build && gh-pages -d dist -m \"Déploiement $(date +%F)\""
   },
   "dependencies": {
     "@fontsource-variable/archivo": "^5.3.0",
@@ -26,8 +27,10 @@
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "gh-pages": "^6.3.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.0",
+    "vite-plugin-pwa": "^1.3.0",
     "vitest": "^4.1.11"
   }
 }

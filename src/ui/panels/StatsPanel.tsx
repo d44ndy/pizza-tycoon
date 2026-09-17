@@ -7,6 +7,9 @@ import { achievementMultiplier, achievementsOwnedCount } from '../../engine/achi
 import { upgradesOwnedCount } from '../../engine/upgrades.ts';
 import { recipeLayer, starMultiplier } from '../../engine/prestige.ts';
 import { completedCount } from '../../engine/challenges.ts';
+import { expansionLayer } from '../../engine/prestige.ts';
+import { totalCityLevels } from '../../engine/expansion.ts';
+import { cityProduction } from '../../engine/formulas.ts';
 import { CHALLENGES } from '../../data/challenges.ts';
 import { ACHIEVEMENTS } from '../../data/achievements.ts';
 import { UPGRADES } from '../../data/upgrades.ts';
@@ -33,6 +36,10 @@ export function StatsPanel() {
     [t.stats.starBonus, `×${starMultiplier(state).toNumber().toFixed(2)}`],
     [t.stats.prestigeCount, fmtInt(recipeLayer(state).resets)],
     [t.stats.challengesDone, `${fmtInt(completedCount(state))} / ${CHALLENGES.length}`],
+    [t.stats.contracts, fmt(expansionLayer(state).currency)],
+    [t.stats.expansions, fmtInt(expansionLayer(state).resets)],
+    [t.stats.cities, fmtInt(totalCityLevels(state))],
+    [t.stats.cityProduction, `${fmt(cityProduction(state))} ${t.game.currency}${t.game.perSecond}`],
     [t.stats.earnedRun, fmt(state.stats.earnedRun)],
     [t.stats.earnedTotal, fmt(state.stats.earnedTotal)],
     [t.stats.best, fmt(state.stats.bestPizzas)],

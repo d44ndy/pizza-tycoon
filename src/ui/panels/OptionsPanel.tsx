@@ -5,6 +5,7 @@ import type { Notation } from '../../engine/format.ts';
 import { updateSettings } from '../../engine/actions.ts';
 import { dispatch, exportCurrent, hardReset, importFrom, saveNow } from '../../store/gameLoop.ts';
 import { useGameStore } from '../../store/gameStore.ts';
+import { playSound } from '../sound.ts';
 import styles from './OptionsPanel.module.css';
 
 const NOTATIONS: Array<[Notation, string]> = [
@@ -109,9 +110,18 @@ export function OptionsPanel() {
         {t.options.reducedMotion}
       </label>
 
-      <label className={styles.checkbox} data-disabled="true">
-        <input type="checkbox" checked={false} disabled readOnly />
-        {t.options.sound} <span className={styles.soon}>{t.options.soundSoon}</span>
+      <label className={styles.checkbox}>
+        <input
+          type="checkbox"
+          checked={settings.sound}
+          onChange={(e) => {
+            dispatch((s) => updateSettings(s, { sound: e.target.checked }));
+            // Un retour sonore immédiat : la case cochée est elle-même le geste
+            // qui autorise le navigateur à démarrer l'audio.
+            if (e.target.checked) playSound('achievement', true);
+          }}
+        />
+        {t.options.sound}
       </label>
 
       <hr className={styles.separator} />

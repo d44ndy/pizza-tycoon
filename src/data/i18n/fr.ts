@@ -20,6 +20,7 @@ export const fr = {
     succes: 'Hauts faits',
     prestige: 'Recette Secrète',
     defis: 'Défis',
+    expansion: 'Expansion',
     stats: 'Stats',
     options: 'Options',
   },
@@ -102,6 +103,39 @@ export const fr = {
       'Brûle ton empire et recommence avec une meilleure recette. '
       + 'Plus tu auras produit de pizzas, plus tu gagneras d’Étoiles.',
   },
+  expansion: {
+    title: 'Expansion Mondiale',
+    currency: 'Contrats',
+    currencyOne: 'Contrat',
+    inBank: 'En réserve',
+    intro:
+      'Transcende ton empire pour signer des Contrats, et ouvre des villes. '
+      + 'Une ville produit en parallèle de tes cuisines et ne repart JAMAIS de zéro : '
+      + 'ni au prestige, ni en défi.',
+    pending: (contracts: string) => `+${contracts} si tu transcendes maintenant`,
+    pendingNone: 'Pas encore assez pour une expansion',
+    progress: (current: string, needed: string) => `${current} / ${needed} pizzas produites en tout`,
+    totalEarned: 'Signés en tout',
+    resets: 'Expansions',
+    cityProduction: 'Production des villes',
+    button: 'Transcender',
+    confirmTitle: 'Tout recommencer ?',
+    confirmBody: (contracts: string) =>
+      `Tu perds TOUT ce que la Recette Secrète a construit : pizzas, cuisines, `
+      + `améliorations, Étoiles et arbre du chef. Tu gardes tes hauts faits, tes défis `
+      + `relevés et tes villes, et tu signes ${contracts} Contrats.`,
+    confirmAction: 'Transcender',
+    cancel: 'Annuler',
+    done: 'Expansion mondiale !',
+    citiesTitle: 'Tes villes',
+    found: 'Fonder',
+    upgrade: 'Agrandir',
+    level: (level: number) => `Niveau ${level}`,
+    notFounded: 'Pas encore fondée',
+    cost: (contracts: number) => `${contracts} ⛨`,
+    locked: (city: string) => `Fonde ${city} d’abord`,
+    cityOutput: (amount: string) => `${amount} pizzas/s`,
+  },
   challenges: {
     title: 'Défis',
     intro:
@@ -157,6 +191,10 @@ export const fr = {
     starBonus: 'Bonus des Étoiles',
     prestigeCount: 'Recettes secrètes',
     challengesDone: 'Défis relevés',
+    contracts: 'Contrats en réserve',
+    cities: 'Niveaux de ville',
+    expansions: 'Expansions',
+    cityProduction: 'Production des villes',
     eventsClicked: 'Pizzas d’or attrapées',
     clickPower: 'Valeur d’un pétrissage',
     createdAt: 'Partie commencée le',

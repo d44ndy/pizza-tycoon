@@ -10,6 +10,7 @@ import { useGameStore } from '../../store/gameStore.ts';
 import { FloatingNumbers, type Pop } from '../common/FloatingNumbers.tsx';
 import { PizzaMark } from '../icons/PizzaMark.tsx';
 import { useFormat } from '../useFormat.ts';
+import { useSound } from '../useSound.ts';
 import styles from './ClickerPanel.module.css';
 
 export function ClickerPanel() {
@@ -17,6 +18,7 @@ export function ClickerPanel() {
   const production = useGameStore((s) => s.production);
   const state = useGameStore((s) => s.state);
   const { fmt } = useFormat();
+  const sound = useSound();
 
   const [pops, setPops] = useState<readonly Pop[]>([]);
   const nextId = useRef(0);
@@ -26,6 +28,7 @@ export function ClickerPanel() {
   function handleClick(event: MouseEvent<HTMLButtonElement>) {
     const gain = clickPower(state);
     doClick();
+    sound('click');
 
     const rect = event.currentTarget.getBoundingClientRect();
     const id = nextId.current++;

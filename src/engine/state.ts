@@ -17,7 +17,7 @@ import type { Notation } from './format.ts';
 export type BulkMode = 1 | 10 | 100 | 'max';
 
 /** Onglets de l'interface (les suivants arriveront avec leurs phases respectives). */
-export type TabId = 'game' | 'succes' | 'prestige' | 'defis' | 'stats' | 'options';
+export type TabId = 'game' | 'succes' | 'prestige' | 'defis' | 'expansion' | 'stats' | 'options';
 
 export type GeneratorState = {
   readonly id: GeneratorId;

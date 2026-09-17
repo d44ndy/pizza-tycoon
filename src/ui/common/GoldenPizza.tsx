@@ -10,6 +10,7 @@ import { EVENT_LIFETIME } from '../../data/events.ts';
 import { doCatchEvent } from '../../store/gameLoop.ts';
 import { useGameStore } from '../../store/gameStore.ts';
 import { useFormat } from '../useFormat.ts';
+import { useSound } from '../useSound.ts';
 import { PizzaMark } from '../icons/PizzaMark.tsx';
 import styles from './GoldenPizza.module.css';
 
@@ -18,6 +19,7 @@ export function GoldenPizza() {
   const playTime = useGameStore((s) => s.state.stats.playTimeTotal);
   const pushToast = useGameStore((s) => s.pushToast);
   const { fmt } = useFormat();
+  const sound = useSound();
   const [caught, setCaught] = useState<{ id: number; text: string; x: number; y: number } | null>(null);
 
   // Le libellé du gain s'efface tout seul.
@@ -42,6 +44,7 @@ export function GoldenPizza() {
           onClick={() => {
             const result = doCatchEvent();
             if (!result) return;
+            sound('event');
             pushToast({ kind: 'info', title: result.name, text: result.gained.gt(0) ? `+${fmt(result.gained)}` : '' });
             setCaught({ id: Date.now(), text: result.gained.gt(0) ? `+${fmt(result.gained)}` : result.name, x: pending.x, y: pending.y });
           }}

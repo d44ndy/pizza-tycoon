@@ -14,6 +14,7 @@ import {
 import { OFFLINE_BASE_CAP_SECONDS, OFFLINE_BASE_EFFICIENCY } from '../data/config.ts';
 import { JACKPOT_SECONDS } from '../data/events.ts';
 import { CHALLENGES_BY_ID } from '../data/challenges.ts';
+import { CITIES, CITY_CAPS, type CityId } from '../data/cities.ts';
 
 /** Couche de prestige vide, utilisée tant que le joueur n'a jamais prestigé. */
 export const EMPTY_LAYER: PrestigeLayerState = {
@@ -25,6 +26,16 @@ export const EMPTY_LAYER: PrestigeLayerState = {
 
 export function recipeLayer(state: GameState): PrestigeLayerState {
   return state.prestige.layers.recipe ?? EMPTY_LAYER;
+}
+
+/** Couche 2 : les Contrats et les villes fondées (identifiant -> niveau). */
+export function expansionLayer(state: GameState): PrestigeLayerState {
+  return state.prestige.layers.expansion ?? EMPTY_LAYER;
+}
+
+/** Niveau d'une ville (0 = pas encore fondée). */
+export function cityLevel(state: GameState, id: CityId): number {
+  return expansionLayer(state).nodes[id] ?? 0;
 }
 
 /* ------------------------------------------------------------------ */
@@ -67,6 +78,10 @@ export function totalForStars(stars: Decimal): Decimal {
 
 export type PermanentEffects = {
   globalMult: Decimal;
+  /** Multiplicateur réservé aux cuisines (les villes n'en profitent pas). */
+  kitchenMult: Decimal;
+  /** Multiplicateur réservé aux villes. */
+  cityMult: Decimal;
   clickMult: Decimal;
   /** Multiplicateur appliqué au coût des cuisines (1 = prix plein). */
   generatorCost: number;
@@ -89,6 +104,8 @@ export type PermanentEffects = {
 
 const DEFAULT_EFFECTS: PermanentEffects = {
   globalMult: ONE,
+  kitchenMult: ONE,
+  cityMult: ONE,
   clickMult: ONE,
   generatorCost: 1,
   upgradeCost: 1,
@@ -126,7 +143,10 @@ export function permanentEffects(state: GameState): PermanentEffects {
     const reward = CHALLENGES_BY_ID[id]?.reward;
     if (reward) sources.push(reward);
   }
-  if (sources.length === 0) return DEFAULT_EFFECTS;
+  const cityLevels = CITIES.map((def) => [def, cityLevel(state, def.id)] as const)
+    .filter(([, level]) => level > 0);
+
+  if (sources.length === 0 && cityLevels.length === 0) return DEFAULT_EFFECTS;
 
   const result: PermanentEffects = { ...DEFAULT_EFFECTS, startGenerators: {} };
   for (const effect of sources) {
@@ -150,6 +170,42 @@ export function permanentEffects(state: GameState): PermanentEffects {
         break;
     }
   }
+
+  // Les villes (couche 2). Leurs effets sont proportionnels au niveau et plafonnés
+  // là où ils finiraient sinon par casser l'économie.
+  for (const [def, level] of cityLevels) {
+    const effect = def.effect;
+    switch (effect.type) {
+      case 'kitchenBoost':
+        result.kitchenMult = result.kitchenMult.mul(1 + (effect.percent / 100) * level);
+        break;
+      case 'cityBoost':
+        result.cityMult = result.cityMult.mul(1 + (effect.percent / 100) * level);
+        break;
+      case 'clickBoost':
+        result.clickMult = result.clickMult.mul(Math.pow(effect.factor, level));
+        break;
+      case 'cheaperKitchens':
+        result.generatorCost *= Math.max(
+          CITY_CAPS.cheaperKitchens,
+          Math.pow(1 - effect.percent / 100, level),
+        );
+        break;
+      case 'fasterEvents':
+        result.eventFrequency *= Math.max(
+          CITY_CAPS.fasterEvents,
+          Math.pow(1 - effect.percent / 100, level),
+        );
+        break;
+      case 'offlineBoost':
+        result.offlineEfficiency = Math.min(
+          CITY_CAPS.offlineEfficiency,
+          result.offlineEfficiency + (effect.percent / 100) * level,
+        );
+        break;
+    }
+  }
+
   return result;
 }
 

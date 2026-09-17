@@ -11,6 +11,7 @@ import { useGameStore } from '../../store/gameStore.ts';
 import { Tooltip } from '../common/Tooltip.tsx';
 import { Picto } from '../icons/Picto.tsx';
 import { useFormat } from '../useFormat.ts';
+import { useSound } from '../useSound.ts';
 import styles from './UpgradesPanel.module.css';
 
 export function UpgradesPanel() {
@@ -68,13 +69,17 @@ export function UpgradesPanel() {
 type CardProps = { def: UpgradeDef; affordable: boolean; cost: string };
 
 function UpgradeCard({ def, affordable, cost }: CardProps) {
+  const sound = useSound();
   return (
     <button
       type="button"
       className={styles.card}
       data-affordable={affordable}
       disabled={!affordable}
-      onClick={() => doBuyUpgrade(def.id)}
+      onClick={() => {
+        doBuyUpgrade(def.id);
+        sound('buy');
+      }}
       title={affordable ? t.upgrades.buy : t.upgrades.cantAfford}
     >
       <span className={styles.cardPicto}>
