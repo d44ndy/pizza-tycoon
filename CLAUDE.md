@@ -171,9 +171,10 @@ moins celles déjà encaissées. Chaque Étoile **non dépensée** donne +2 % de
 - **Conservé** : hauts faits, drapeaux, statistiques globales, Étoiles, arbre, réglages.
 - L'arbre compte **28 nœuds** en 4 branches (fournil, salle, nuit, brigade) pour 481 Étoiles
   au total : il s'ouvre sur plusieurs semaines, c'est voulu.
-- Les effets de l'arbre sont agrégés par `treeEffects()` : les multiplicateurs se
-  multiplient, les valeurs (rendement hors ligne, plafond, bonus par Étoile) prennent
-  le MEILLEUR nœud — acheter la version supérieure remplace la précédente.
+- Les effets de l'arbre sont agrégés par `permanentEffects()`, avec les récompenses de
+  défis et les villes : les multiplicateurs se multiplient, les valeurs (rendement hors
+  ligne, plafond, bonus par Étoile) prennent le MEILLEUR — acheter la version supérieure
+  remplace la précédente au lieu de s'y ajouter.
 
 Rythme mesuré au simulateur (joueur actif, `--hours 48`) : prestiges à 52 min, 1 h 46,
 3 h 15, 6 h 07, 11 h 35, 21 h 48 et 1 j 12 h ; 12 nœuds sur 28 et 10e cuisine achetée
@@ -250,6 +251,12 @@ Une sauvegarde illisible n'est **jamais** écrasée : elle est recopiée dans
 - Imports relatifs avec extension `.ts` / `.tsx` (pas d'alias de chemin).
 - Un composant = un fichier `.tsx` + un `.module.css` du même nom.
 - Tests dans `tests/`, nommés `<module>.test.ts`, descriptions en français.
+
+## En ligne
+
+Le jeu est déployé sur **https://d44ndy.github.io/pizza-tycoon/** depuis la branche
+`gh-pages` (`npm run deploy`). Vérifié en production : chargement sans erreur console,
+service worker enregistré sur le bon scope, sauvegarde locale fonctionnelle.
 
 ## Feuille de route
 
