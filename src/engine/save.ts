@@ -122,7 +122,10 @@ export function toSaveData(state: GameState, now: number = Date.now()): SaveData
       bestPizzas: state.stats.bestPizzas.toString(),
       eventsClicked: state.stats.eventsClicked,
     },
-    settings: { ...state.settings },
+    settings: {
+      ...state.settings,
+      automation: { ...state.settings.automation, excluded: [...state.settings.automation.excluded] },
+    },
     prestige: { layers },
     rng: { seed: state.rng.seed },
     lastSaved: now,
@@ -274,6 +277,17 @@ export function fromSaveData(raw: unknown): GameState {
       theme: migrated.settings?.theme ?? base.settings.theme,
       reducedMotion: bool(migrated.settings?.reducedMotion, base.settings.reducedMotion),
       sound: bool(migrated.settings?.sound, base.settings.sound),
+      // Réglages ajoutés après la v3 : absents des anciennes sauvegardes, ils prennent
+      // leur valeur par défaut. Le format ne change pas de forme, seulement de contenu.
+      newsTicker: bool(migrated.settings?.newsTicker, base.settings.newsTicker),
+      automation: {
+        clicker: bool(migrated.settings?.automation?.clicker, true),
+        generators: bool(migrated.settings?.automation?.generators, true),
+        upgrades: bool(migrated.settings?.automation?.upgrades, true),
+        excluded: (Array.isArray(migrated.settings?.automation?.excluded)
+          ? migrated.settings.automation.excluded
+          : []).filter((id): id is GeneratorId => GENERATORS.some((g) => g.id === id)),
+      },
     },
     prestige: { layers },
     rng: { seed: num(migrated.rng?.seed, base.rng.seed) },

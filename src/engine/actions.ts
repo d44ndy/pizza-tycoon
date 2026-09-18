@@ -3,7 +3,7 @@
  * C'est la seule façon de modifier la partie (le store ne fait que les appeler).
  */
 import { ZERO, type Decimal } from './decimal.ts';
-import type { BulkMode, GameState, Settings, TabId } from './state.ts';
+import type { AutomationSettings, BulkMode, GameState, Settings, TabId } from './state.ts';
 import { GENERATORS_BY_ID, type GeneratorId } from '../data/generators.ts';
 import { clickPower, costRules, resolveBulk, totalProduction } from './formulas.ts';
 import { currentRules, isGeneratorAllowed } from './challenges.ts';
@@ -94,4 +94,24 @@ export function setBulkMode(state: GameState, bulkMode: BulkMode): GameState {
 
 export function setTab(state: GameState, tab: TabId): GameState {
   return { ...state, ui: { ...state.ui, tab } };
+}
+
+/** Modifie les préférences d'automatisation. */
+export function updateAutomation(state: GameState, patch: Partial<AutomationSettings>): GameState {
+  return updateSettings(state, { automation: { ...state.settings.automation, ...patch } });
+}
+
+/** Retire une cuisine des achats du commis, ou la lui rend. */
+export function toggleAutoBuy(state: GameState, id: GeneratorId): GameState {
+  const excluded = state.settings.automation.excluded;
+  return updateAutomation(state, {
+    excluded: excluded.includes(id) ? excluded.filter((e) => e !== id) : [...excluded, id],
+  });
+}
+
+/** Mode d'achat suivant : ×1 → ×10 → ×100 → Max → ×1 (raccourci clavier). */
+export function cycleBulkMode(state: GameState): GameState {
+  const order: BulkMode[] = [1, 10, 100, 'max'];
+  const index = order.indexOf(state.settings.bulkMode);
+  return setBulkMode(state, order[(index + 1) % order.length]!);
 }

@@ -113,12 +113,30 @@ export type Stats = {
   eventsClicked: number;
 };
 
+/**
+ * Préférences d'automatisation. Elles n'ont d'effet que si l'arbre de prestige
+ * (ou une récompense) a débloqué l'automatisme correspondant.
+ */
+export type AutomationSettings = {
+  /** Pétrisseur automatique actif. */
+  clicker: boolean;
+  /** Commis aux achats (cuisines) actif. */
+  generators: boolean;
+  /** Chef des achats (améliorations) actif. */
+  upgrades: boolean;
+  /** Cuisines que le commis ne doit jamais acheter. */
+  excluded: GeneratorId[];
+};
+
 export type Settings = {
   notation: Notation;
   bulkMode: BulkMode;
   theme: 'dark' | 'light';
   reducedMotion: boolean;
   sound: boolean;
+  /** Bandeau « La Gazette de la Pâte ». */
+  newsTicker: boolean;
+  automation: AutomationSettings;
 };
 
 export type GameState = {
@@ -192,6 +210,8 @@ export function createInitialState(now: number = Date.now(), seed: number = crea
       theme: 'light',
       reducedMotion: false,
       sound: false,
+      newsTicker: true,
+      automation: { clicker: true, generators: true, upgrades: true, excluded: [] },
     },
     ui: { tab: 'game' },
     prestige: { layers: {} },

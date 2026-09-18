@@ -51,11 +51,14 @@ export function ClickerPanel() {
       </div>
 
       {production.gt(0) && (
-        <div className={styles.rateBox}>
-          <span className={styles.rateLabel}>{t.game.production}</span>
-          <span className={`${styles.rate} num`}>
-            {fmt(production)} {t.game.perSecond}
-          </span>
+        <div className={styles.rateBlock}>
+          <div className={styles.rateBox}>
+            <span className={styles.rateLabel}>{t.game.production}</span>
+            <span className={`${styles.rate} num`}>
+              {fmt(production)} {t.game.perSecond}
+            </span>
+          </div>
+          <span className={`${styles.perHour} num`}>{t.game.perHour(fmt(production.mul(3600)))}</span>
         </div>
       )}
 

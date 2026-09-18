@@ -17,9 +17,13 @@ import { applyElapsed, applyOffline, OFFLINE_MIN_SECONDS } from '../engine/offli
 import { createInitialState, type GameState } from '../engine/state.ts';
 import { clearStorage, exportSave, importSave, loadFromStorage, saveToStorage } from '../engine/save.ts';
 import { tick } from '../engine/tick.ts';
-import { buyGenerator, catchEvent, clickDough } from '../engine/actions.ts';
-import { buyUpgrade } from '../engine/upgrades.ts';
-import { buyNode, doPrestige } from '../engine/prestige.ts';
+import {
+  buyGenerator, catchEvent, clickDough, cycleBulkMode, toggleAutoBuy, updateAutomation,
+} from '../engine/actions.ts';
+import { GENERATORS } from '../data/generators.ts';
+import type { AutomationSettings } from '../engine/state.ts';
+import { buyAllUpgrades, buyUpgrade } from '../engine/upgrades.ts';
+import { buyNode, doPrestige, respecTree } from '../engine/prestige.ts';
 import { enterChallenge, exitChallenge } from '../engine/challenges.ts';
 import { doTranscend, upgradeCity } from '../engine/expansion.ts';
 import type { CityId } from '../data/cities.ts';
@@ -81,6 +85,49 @@ export function doBuy(id: GeneratorId): void {
 
 export function doBuyUpgrade(id: string): void {
   dispatch((state) => buyUpgrade(state, id).state);
+}
+
+/** Achète toutes les améliorations abordables ; renvoie le nombre d'achats. */
+export function doBuyAllUpgrades(): number {
+  const result = buyAllUpgrades(current);
+  if (result.bought > 0) {
+    current = result.state;
+    publish();
+  }
+  return result.bought;
+}
+
+/** Achète la n-ième cuisine (raccourcis 1 à 0) ; ne fait rien si elle est cachée. */
+export function doBuyByIndex(index: number): boolean {
+  const def = GENERATORS[index];
+  if (!def || !current.generators[def.id].unlocked) return false;
+  const result = buyGenerator(current, def.id);
+  if (result.bought === 0) return false;
+  current = result.state;
+  publish();
+  return true;
+}
+
+export function doCycleBulk(): void {
+  dispatch(cycleBulkMode);
+}
+
+export function doToggleAutoBuy(id: GeneratorId): void {
+  dispatch((state) => toggleAutoBuy(state, id));
+}
+
+export function doSetAutomation(patch: Partial<AutomationSettings>): void {
+  dispatch((state) => updateAutomation(state, patch));
+}
+
+/** Remet l'arbre à plat (avec remise à zéro de la partie). Sauvegarde aussitôt. */
+export function doRespec(): number {
+  const result = respecTree(current);
+  if (result.refunded <= 0) return 0;
+  current = result.state;
+  saveNow();
+  publish();
+  return result.refunded;
 }
 
 /** Attrape la pizza d'or affichée ; renvoie le gain immédiat éventuel. */

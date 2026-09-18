@@ -35,6 +35,19 @@
   color: var(--dim);
 }
 
+.rateBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.perHour {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--faint);
+}
+
 .rateBox {
   display: flex;
   align-items: baseline;

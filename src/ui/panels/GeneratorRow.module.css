@@ -116,8 +116,31 @@
 
 .info {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
   padding: 7px 7px 0 0;
+}
+
+/* Interrupteur du commis : tampon plein quand il achète, en creux quand il est retiré. */
+.auto {
+  padding: 1px 5px;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1.5px solid var(--line-soft);
+  border-radius: 2px;
+  color: var(--faint);
+  background: transparent;
+  text-decoration: line-through;
+}
+
+.auto[data-on='true'] {
+  border-color: var(--line);
+  background: var(--bas);
+  color: var(--tom-ink);
+  text-decoration: none;
 }
 
 .tipName {

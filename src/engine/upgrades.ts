@@ -77,3 +77,19 @@ export function buyUpgrade(state: GameState, id: string): BuyUpgradeResult {
     spent: cost,
   };
 }
+
+/**
+ * Achète toutes les améliorations abordables, les moins chères d'abord.
+ * Renvoie le nombre d'achats effectués (0 si rien n'était abordable).
+ */
+export function buyAllUpgrades(state: GameState): { state: GameState; bought: number } {
+  let current = state;
+  let bought = 0;
+  for (const def of availableUpgrades(state)) {
+    const result = buyUpgrade(current, def.id);
+    if (!result.bought) continue;
+    current = result.state;
+    bought++;
+  }
+  return { state: current, bought };
+}

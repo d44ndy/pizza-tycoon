@@ -11,9 +11,9 @@ import {
 } from '../../data/prestige.ts';
 import {
   canBuyNode, hasNode, isNodeAvailable, pendingStars, recipeLayer,
-  starMultiplier, starsFromTotal, totalForStars, permanentEffects,
+  spentStars, starMultiplier, starsFromTotal, totalForStars, permanentEffects,
 } from '../../engine/prestige.ts';
-import { doBuyNode, doPrestigeNow } from '../../store/gameLoop.ts';
+import { doBuyNode, doPrestigeNow, doRespec } from '../../store/gameLoop.ts';
 import { useGameStore } from '../../store/gameStore.ts';
 import { Modal } from '../common/Modal.tsx';
 import { ProgressBar } from '../common/ProgressBar.tsx';
@@ -28,6 +28,8 @@ export function PrestigePanel() {
   const setToast = useGameStore((s) => s.setToast);
   const { fmt } = useFormat();
   const [confirming, setConfirming] = useState(false);
+  const [respeccing, setRespeccing] = useState(false);
+  const invested = spentStars(state);
 
   const layer = recipeLayer(state);
   const pending = pendingStars(state);
@@ -96,7 +98,17 @@ export function PrestigePanel() {
         />
       </div>
 
-      <h3 className={styles.treeTitle}>{t.prestige.treeTitle}</h3>
+      <div className={styles.treeHead}>
+        <h3 className={styles.treeTitle}>{t.prestige.treeTitle}</h3>
+        <button
+          type="button"
+          className={styles.respec}
+          disabled={invested === 0}
+          onClick={() => setRespeccing(true)}
+        >
+          {t.prestige.respec}
+        </button>
+      </div>
       <div className={styles.root}>
         {PRESTIGE_TREE.filter((n) => n.branch === 'racine').map((def) => (
           <Node key={def.id} def={def} />
@@ -118,6 +130,25 @@ export function PrestigePanel() {
           </div>
         ))}
       </div>
+
+      {respeccing && (
+        <Modal
+          title={t.prestige.respecTitle}
+          actionLabel={t.prestige.respecAction}
+          onAction={() => {
+            const refunded = doRespec();
+            setRespeccing(false);
+            if (refunded > 0) {
+              setToast(t.prestige.respecDone);
+              window.setTimeout(() => setToast(null), 2200);
+            }
+          }}
+          cancelLabel={t.prestige.cancel}
+          onCancel={() => setRespeccing(false)}
+        >
+          <span>{t.prestige.respecBody(invested)}</span>
+        </Modal>
+      )}
 
       {confirming && (
         <Modal

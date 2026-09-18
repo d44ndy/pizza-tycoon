@@ -340,3 +340,42 @@ export function doPrestige(state: GameState): PrestigeResult {
   if (gained.lt(1)) return { state, gained: ZERO };
   return { gained, state: resetRun(state) };
 }
+
+/* ------------------------------------------------------------------ */
+/* Refaire l'arbre                                                     */
+/* ------------------------------------------------------------------ */
+
+/** Étoiles actuellement investies dans l'arbre (ce qu'une remise à plat rendrait). */
+export function spentStars(state: GameState): number {
+  return Object.keys(recipeLayer(state).nodes).reduce(
+    (sum, id) => sum + (PRESTIGE_NODES_BY_ID[id]?.cost ?? 0),
+    0,
+  );
+}
+
+/**
+ * Refaire l'arbre : toutes les Étoiles investies sont rendues, et la partie repart
+ * de zéro comme après une Recette Secrète.
+ *
+ * La remise à zéro est le prix à payer, et c'est voulu. Sans elle, on pourrait
+ * basculer vers les nœuds « hors ligne » juste avant de quitter le jeu, puis revenir
+ * aux nœuds « actifs » en rentrant : une optimisation fastidieuse que personne ne
+ * devrait se sentir obligé de faire à chaque session.
+ */
+export function respecTree(state: GameState): { state: GameState; refunded: number } {
+  const refunded = spentStars(state);
+  if (refunded <= 0) return { state, refunded: 0 };
+
+  const layer = recipeLayer(state);
+  const cleared: GameState = {
+    ...state,
+    prestige: {
+      ...state.prestige,
+      layers: {
+        ...state.prestige.layers,
+        recipe: { ...layer, currency: layer.currency.add(refunded), nodes: {} },
+      },
+    },
+  };
+  return { state: resetRun(cleared), refunded };
+}

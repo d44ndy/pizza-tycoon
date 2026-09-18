@@ -26,6 +26,7 @@ export function StatsPanel() {
 
   const rows: Array<[string, string]> = [
     [t.stats.production, `${fmt(production)} ${t.game.currency}${t.game.perSecond}`],
+    [t.stats.perHour, `${fmt(production.mul(3600))} ${t.game.currency}`],
     [t.stats.clickPower, fmt(clickPower(state))],
     [t.stats.generatorsOwned, fmtInt(owned)],
     [t.stats.upgradesOwned, `${fmtInt(upgradesOwnedCount(state))} / ${UPGRADES.length}`],

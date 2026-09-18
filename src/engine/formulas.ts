@@ -241,3 +241,16 @@ export function productionShare(state: GameState, id: GeneratorId): number {
   if (total.lte(0)) return 0;
   return generatorProduction(state, id).div(total).toNumber();
 }
+
+/**
+ * Secondes avant de pouvoir payer `cost` au rythme actuel de production.
+ * 0 si c'est déjà abordable, `null` si la production est nulle (jamais, en l'état).
+ * Ne tient pas compte des achats futurs : c'est une estimation « si tu attends ».
+ */
+export function timeToAfford(state: GameState, cost: Decimal): number | null {
+  if (state.pizzas.gte(cost)) return 0;
+  const production = totalProduction(state);
+  if (production.lte(0)) return null;
+  const seconds = cost.sub(state.pizzas).div(production).toNumber();
+  return Number.isFinite(seconds) ? seconds : null;
+}

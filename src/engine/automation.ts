@@ -8,7 +8,7 @@
 import type { GameState } from './state.ts';
 import { GENERATORS } from '../data/generators.ts';
 import { buyGenerator, clickDough } from './actions.ts';
-import { availableUpgrades, buyUpgrade } from './upgrades.ts';
+import { availableUpgrades, buyUpgrade, upgradeCost } from './upgrades.ts';
 import { costOfNext, costRules, totalProduction } from './formulas.ts';
 import { currentRules, isGeneratorAllowed } from './challenges.ts';
 import { permanentEffects } from './prestige.ts';
@@ -32,8 +32,11 @@ function autoBuyGenerator(state: GameState): GameState {
 
   let bestId: (typeof GENERATORS)[number]['id'] | null = null;
   let bestRatio = 0;
+  const excluded = state.settings.automation.excluded;
   for (const def of GENERATORS) {
     if (!isGeneratorAllowed(allowed, def)) continue;
+    // Le joueur a retiré cette cuisine des mains du commis.
+    if (excluded.includes(def.id)) continue;
     const owned = state.generators[def.id].owned;
     const cost = costOfNext(def, owned, rules);
     if (cost.gt(budget)) continue;
@@ -53,7 +56,8 @@ function autoBuyGenerator(state: GameState): GameState {
 /** Achète la première amélioration abordable (les moins chères d'abord). */
 function autoBuyUpgrade(state: GameState): GameState {
   for (const def of availableUpgrades(state)) {
-    if (state.pizzas.gte(def.cost)) return buyUpgrade(state, def.id).state;
+    // Prix réel (réduction « Bricolage » comprise), pas le prix catalogue.
+    if (state.pizzas.gte(upgradeCost(state, def))) return buyUpgrade(state, def.id).state;
   }
   return state;
 }
@@ -65,15 +69,19 @@ function autoBuyUpgrade(state: GameState): GameState {
  */
 export function runAutomation(state: GameState, dt: number): GameState {
   const effects = permanentEffects(state);
-  const automates = effects.autoClick > 0 || effects.autoBuyGenerators || effects.autoBuyUpgrades;
-  if (!automates) return state;
+  const prefs = state.settings.automation;
+  // Un automatisme ne tourne que s'il est débloqué ET que le joueur l'a laissé actif.
+  const clicker = effects.autoClick > 0 && prefs.clicker;
+  const generators = effects.autoBuyGenerators && prefs.generators;
+  const upgrades = effects.autoBuyUpgrades && prefs.upgrades;
+  if (!clicker && !generators && !upgrades) return state;
 
   let next = state;
   let { clickCredit, buyCooldown } = state.automation;
 
   // Pétrissage automatique. La marge de 1e-9 évite qu'une somme de 0,05 s
   // s'arrête à 0,999999999 et fasse perdre un clic selon le découpage du temps.
-  if (effects.autoClick > 0) {
+  if (clicker) {
     clickCredit += effects.autoClick * dt;
     let guard = 0;
     while (clickCredit >= 1 - 1e-9 && guard++ < 60) {
@@ -87,8 +95,8 @@ export function runAutomation(state: GameState, dt: number): GameState {
   if (buyCooldown <= 0) {
     buyCooldown = BUY_INTERVAL;
     // Les améliorations d'abord : à prix égal elles rapportent presque toujours plus.
-    if (effects.autoBuyUpgrades) next = autoBuyUpgrade(next);
-    if (effects.autoBuyGenerators) next = autoBuyGenerator(next);
+    if (upgrades) next = autoBuyUpgrade(next);
+    if (generators) next = autoBuyGenerator(next);
   }
 
   return { ...next, automation: { clickCredit, buyCooldown } };

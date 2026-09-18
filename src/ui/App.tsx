@@ -20,6 +20,9 @@ import { useGameStore } from '../store/gameStore.ts';
 import { Tabs } from './Tabs.tsx';
 import { BuffBar } from './common/BuffBar.tsx';
 import { ChallengeBanner } from './common/ChallengeBanner.tsx';
+import { NewsTicker } from './common/NewsTicker.tsx';
+import { useKeyboardShortcuts } from './useKeyboardShortcuts.ts';
+import { useSound } from './useSound.ts';
 import { GoldenPizza } from './common/GoldenPizza.tsx';
 import { Modal } from './common/Modal.tsx';
 import { Toasts } from './common/Toasts.tsx';
@@ -45,6 +48,8 @@ export function App() {
   const setOffline = useGameStore((s) => s.setOffline);
   const setCorrupted = useGameStore((s) => s.setCorrupted);
   const { fmt } = useFormat();
+  const sound = useSound();
+  const newsTicker = useGameStore((s) => s.state.settings.newsTicker);
 
   // Démarrage de la boucle de jeu (chargement de la partie + hors ligne inclus).
   useEffect(() => startLoop(), []);
@@ -79,6 +84,8 @@ export function App() {
   const showExpansion = expansionRevealed(state);
   const showTabs = anyGenerator || anyAchievement || showPrestige || showChallenges || showExpansion;
 
+  useKeyboardShortcuts(state.ui.tab, sound);
+
   // Œuf de Pâques : insister sur le sujet qui fâche.
   const titleClicks = useRef(0);
   function pokeTitle() {
@@ -97,6 +104,10 @@ export function App() {
         <ChallengeBanner />
         <BuffBar />
       </header>
+
+      {/* La Gazette apparaît avec les onglets : au tout premier écran, rien ne doit
+          détourner l'attention de la pizza. */}
+      {showTabs && newsTicker && <NewsTicker />}
 
       {showTabs && (
         <div className={styles.nav}>

@@ -4,9 +4,11 @@ import type { GeneratorDef } from '../../data/generators.ts';
 import { milestonesReached } from '../../data/config.ts';
 import {
   costRules, generatorMultiplier, generatorProduction, milestoneProgress,
-  productionShare, resolveBulk,
+  productionShare, resolveBulk, timeToAfford,
 } from '../../engine/formulas.ts';
-import { doBuy } from '../../store/gameLoop.ts';
+import { permanentEffects } from '../../engine/prestige.ts';
+import { doBuy, doToggleAutoBuy } from '../../store/gameLoop.ts';
+import { WaitTime } from '../common/WaitTime.tsx';
 import { useGameStore } from '../../store/gameStore.ts';
 import { ProgressBar } from '../common/ProgressBar.tsx';
 import { Tooltip } from '../common/Tooltip.tsx';
@@ -27,6 +29,10 @@ export function GeneratorRow({ def }: Props) {
   const progress = milestoneProgress(gs.owned);
   const unitProduction = def.baseProduction.mul(generatorMultiplier(state, def.id));
   const multiplier = Math.pow(2, milestonesReached(gs.owned));
+  const wait = bulk.affordable ? 0 : timeToAfford(state, bulk.cost);
+  // L'interrupteur n'apparaît qu'une fois le commis aux achats débloqué.
+  const commis = permanentEffects(state).autoBuyGenerators;
+  const autoOn = !state.settings.automation.excluded.includes(def.id);
 
   return (
     <div className={styles.row} data-affordable={bulk.affordable}>
@@ -50,7 +56,10 @@ export function GeneratorRow({ def }: Props) {
           </span>
 
           <span className={styles.costLine}>
-            <span className={`${styles.cost} num`}>{fmt(bulk.cost)}</span>
+            <span className={`${styles.cost} num`}>
+              {fmt(bulk.cost)}
+              {wait !== 0 && <WaitTime seconds={wait} />}
+            </span>
             <span className={`${styles.count} num`}>
               +{fmtInt(bulk.count)}
               {multiplier > 1 && <span className={styles.boost}> ×{multiplier}</span>}
@@ -68,6 +77,18 @@ export function GeneratorRow({ def }: Props) {
       </button>
 
       <span className={styles.info}>
+        {commis && (
+          <button
+            type="button"
+            className={styles.auto}
+            data-on={autoOn}
+            aria-pressed={autoOn}
+            title={autoOn ? t.generators.autoOn : t.generators.autoOff}
+            onClick={() => doToggleAutoBuy(def.id)}
+          >
+            {t.generators.auto}
+          </button>
+        )}
         <Tooltip
           content={
             <>

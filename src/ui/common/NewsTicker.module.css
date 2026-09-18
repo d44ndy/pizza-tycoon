@@ -1,0 +1,59 @@
+/* Un bandeau de journal : filet d'encre, titre en capitales, dépêche en italique. */
+.ticker {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  padding: 0;
+  text-align: left;
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: 2px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.ticker:hover .text {
+  color: var(--ink);
+}
+
+.masthead {
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding: 5px 10px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: 'Alfa Slab One', Georgia, serif;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 11px;
+  font-size: 12.5px;
+  font-style: italic;
+  line-height: 1.35;
+  color: var(--dim);
+  animation: arrive 0.35s steps(4) both;
+}
+
+@keyframes arrive {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Sur mobile, le titre du journal passe au-dessus de la dépêche. */
+@media (max-width: 560px) {
+  .ticker {
+    flex-direction: column;
+  }
+
+  .masthead {
+    padding: 3px 9px;
+    font-size: 9.5px;
+  }
+}

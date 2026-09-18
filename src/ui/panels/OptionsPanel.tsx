@@ -3,7 +3,10 @@ import { useState } from 'react';
 import { t } from '../../data/i18n/fr.ts';
 import type { Notation } from '../../engine/format.ts';
 import { updateSettings } from '../../engine/actions.ts';
-import { dispatch, exportCurrent, hardReset, importFrom, saveNow } from '../../store/gameLoop.ts';
+import {
+  dispatch, doSetAutomation, exportCurrent, hardReset, importFrom, saveNow,
+} from '../../store/gameLoop.ts';
+import { permanentEffects } from '../../engine/prestige.ts';
 import { useGameStore } from '../../store/gameStore.ts';
 import { playSound } from '../sound.ts';
 import styles from './OptionsPanel.module.css';
@@ -16,6 +19,10 @@ const NOTATIONS: Array<[Notation, string]> = [
 
 export function OptionsPanel() {
   const settings = useGameStore((s) => s.state.settings);
+  // On sélectionne l'état puis on calcule : un sélecteur Zustand qui renverrait un
+  // nouvel objet à chaque appel ferait boucler le rendu.
+  const gameState = useGameStore((s) => s.state);
+  const effects = permanentEffects(gameState);
   const setToast = useGameStore((s) => s.setToast);
 
   const [exported, setExported] = useState('');
@@ -123,6 +130,69 @@ export function OptionsPanel() {
         />
         {t.options.sound}
       </label>
+
+      <label className={styles.checkbox}>
+        <input
+          type="checkbox"
+          checked={settings.newsTicker}
+          onChange={(e) => dispatch((s) => updateSettings(s, { newsTicker: e.target.checked }))}
+        />
+        {t.options.newsTicker}
+      </label>
+
+      {(effects.autoClick > 0 || effects.autoBuyGenerators || effects.autoBuyUpgrades) && (
+        <>
+          <hr className={styles.separator} />
+          <div className={styles.group}>
+            <span className={styles.label}>{t.options.automation}</span>
+            <p className={styles.help}>{t.options.automationHint}</p>
+            {effects.autoClick > 0 && (
+              <label className={styles.checkbox}>
+                <input
+                  type="checkbox"
+                  checked={settings.automation.clicker}
+                  onChange={(e) => doSetAutomation({ clicker: e.target.checked })}
+                />
+                {t.options.autoClicker}
+              </label>
+            )}
+            {effects.autoBuyGenerators && (
+              <label className={styles.checkbox}>
+                <input
+                  type="checkbox"
+                  checked={settings.automation.generators}
+                  onChange={(e) => doSetAutomation({ generators: e.target.checked })}
+                />
+                {t.options.autoGenerators}
+              </label>
+            )}
+            {effects.autoBuyUpgrades && (
+              <label className={styles.checkbox}>
+                <input
+                  type="checkbox"
+                  checked={settings.automation.upgrades}
+                  onChange={(e) => doSetAutomation({ upgrades: e.target.checked })}
+                />
+                {t.options.autoUpgrades}
+              </label>
+            )}
+          </div>
+        </>
+      )}
+
+      <hr className={styles.separator} />
+
+      <div className={styles.group}>
+        <span className={styles.label}>{t.options.shortcuts}</span>
+        <dl className={styles.shortcuts}>
+          {t.options.shortcutList.map(([key, action]) => (
+            <div key={key} className={styles.shortcut}>
+              <dt><kbd className={styles.kbd}>{key}</kbd></dt>
+              <dd>{action}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
 
       <hr className={styles.separator} />
 

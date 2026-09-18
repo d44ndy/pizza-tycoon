@@ -67,6 +67,7 @@ src/
     prestige.ts  Étoiles, arbre de compétences, resetRun / doPrestige
     challenges.ts règles en vigueur, entrée, sortie et validation des défis
     expansion.ts  couche 2 : Contrats, villes, transcendance
+    news.ts      Gazette de la Pâte : dépêches disponibles et choix de la suivante
     automation.ts pétrisseur et acheteurs automatiques (arbre de prestige)
     format.ts    format() : standard / scientifique / ingénieur (+ formatInt, formatTime)
     rng.ts       RNG déterministe seedé (mulberry32), graine stockée dans l'état
@@ -85,6 +86,7 @@ src/
     prestige.ts  les 28 nœuds de l'arbre et la formule des Étoiles
     challenges.ts les 8 défis : contrainte, objectif, récompense
     cities.ts    les 6 villes de la couche 2 et leurs effets
+    news.ts      les 51 dépêches de la Gazette et leurs conditions
     i18n/fr.ts   TOUS les textes affichés
   store/      pont entre le moteur et React
     gameLoop.ts  rAF + accumulateur à pas fixe, autosave, hors ligne, actions exposées
@@ -92,6 +94,7 @@ src/
   ui/         composants React (CSS Modules à côté de chaque composant)
     icons/       pictogrammes SVG maison
     sound.ts     sons synthétisés (Web Audio), aucun fichier externe
+    useKeyboardShortcuts.ts  Espace, 1…0, B, U
 public/       icônes PWA (générées depuis public/icon.svg)
 sim/          simulateur d'équilibrage headless (npm run sim)
 tests/        tests Vitest du moteur
@@ -238,6 +241,27 @@ place l'ouverture de la couche 2 autour de 2 à 4 jours, comme prévu au cahier 
 > Le diviseur valait 1e15 dans la première version : la première transcendance ne
 > rapportait alors qu'UN Contrat pour deux jours de jeu effacés. Personne n'aurait
 > accepté ce marché.
+
+### Confort de jeu
+
+- **Temps avant achat** (`formulas.timeToAfford`) affiché sur chaque cuisine et amélioration
+  non abordable ; au-delà de 30 jours, on écrit « hors de portée pour l'instant ».
+- **Production par heure** sous le compteur et dans les stats.
+- **Automatisation pilotable** : `settings.automation` met en pause chaque automatisme
+  débloqué, et le commis ignore les cuisines de `excluded` (interrupteur AUTO sur la ligne).
+- **Tout acheter** pour les améliorations (`upgrades.buyAllUpgrades`), les moins chères d'abord.
+- **Refaire l'arbre** (`prestige.respecTree`) : rend toutes les Étoiles investies, au prix d'une
+  remise à zéro de la partie — sans ce prix, on basculerait vers les nœuds hors ligne avant
+  chaque départ, et personne ne devrait se sentir obligé de le faire.
+- **Raccourcis** : Espace, 1…0, B, U. Ils se taisent dans un champ de saisie, quand une fenêtre
+  de confirmation est ouverte, et ignorent la répétition de touche (pas d'auto-clic déguisé).
+
+### La Gazette de la Pâte
+
+Un bandeau de fausses dépêches dont le ton suit l'empire (du voisin qui se plaint jusqu'à la
+Lune renommée). 51 dépêches dans `data/news.ts`, **aucune personne ni marque réelle**.
+Priorité à l'actualité : une dépêche débloquée pendant la session passe devant les autres ;
+celles déjà disponibles au chargement comptent comme vues. Désactivable dans les Options.
 
 ### Sauvegarde
 
