@@ -24,6 +24,8 @@ import { GENERATORS } from '../data/generators.ts';
 import type { AutomationSettings } from '../engine/state.ts';
 import { buyAllUpgrades, buyUpgrade } from '../engine/upgrades.ts';
 import { buyNode, doPrestige, respecTree } from '../engine/prestige.ts';
+import { bakePizza, clearDraft, copyBakedToDraft, placeTopping } from '../engine/chefPizza.ts';
+import type { ToppingId } from '../data/toppings.ts';
 import { enterChallenge, exitChallenge } from '../engine/challenges.ts';
 import { doTranscend, upgradeCity } from '../engine/expansion.ts';
 import type { CityId } from '../data/cities.ts';
@@ -167,6 +169,31 @@ export function doTranscendNow(): Decimal | null {
 export function doUpgradeCity(id: CityId): void {
   dispatch((state) => upgradeCity(state, id).state);
   saveNow();
+}
+
+/* --- La Pizza du Chef --- */
+
+/** Pose (ou retire, avec `null`) un ingrédient sur une part de la garniture en cours. */
+export function doPlaceTopping(slice: number, topping: ToppingId | null): void {
+  dispatch((state) => placeTopping(state, slice, topping));
+}
+
+export function doClearDraft(): void {
+  dispatch(clearDraft);
+}
+
+export function doCopyBaked(): void {
+  dispatch(copyBakedToDraft);
+}
+
+/** Enfourne la garniture en cours. Renvoie faux si le four n'est pas prêt. */
+export function doBake(): boolean {
+  const result = bakePizza(current);
+  if (!result.baked) return false;
+  current = result.state;
+  saveNow();
+  publish();
+  return true;
 }
 
 export function doEnterChallenge(id: string): void {

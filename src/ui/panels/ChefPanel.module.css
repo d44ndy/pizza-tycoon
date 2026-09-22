@@ -1,0 +1,364 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.head {
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--line);
+}
+
+.title {
+  font-size: 18px;
+  text-transform: uppercase;
+}
+
+.intro {
+  margin: 0;
+  font-size: 13px;
+  color: var(--dim);
+  max-width: 74ch;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+/* ------------------------------------------------------------------ */
+/* La pizza                                                            */
+/* ------------------------------------------------------------------ */
+
+.pizzaSide {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.pizza {
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  display: block;
+}
+
+.slice {
+  fill: var(--sauce);
+  stroke: var(--line);
+  stroke-width: 2;
+  cursor: pointer;
+}
+
+/* Une part nue laisse voir la pâte : on ne garnit pas ce qui n'est pas garni. */
+.emptySlice {
+  fill-opacity: 0.22;
+}
+
+.slice:hover {
+  fill-opacity: 0.85;
+}
+
+.emptySlice:hover {
+  fill-opacity: 0.4;
+}
+
+/* Repères de lecture : une encre posée PAR-DESSUS la part, jamais un changement
+   de couleur de la part elle-même — sinon les pictos deviennent illisibles. */
+.mark,
+.focusMark {
+  pointer-events: none;
+}
+
+.mark {
+  fill: var(--gold);
+  fill-opacity: 0.16;
+  stroke: var(--gold);
+  stroke-width: 3;
+}
+
+.facing {
+  fill-opacity: 0.08;
+  stroke-dasharray: 8 7;
+}
+
+.focusMark {
+  fill: none;
+  stroke: var(--card);
+  stroke-width: 3.5;
+}
+
+.sliceMarks {
+  pointer-events: none;
+  color: var(--crust);
+}
+
+.emptyDot {
+  fill: var(--line);
+  fill-opacity: 0.35;
+}
+
+.value {
+  text-anchor: middle;
+  font-family: 'Alfa Slab One', Georgia, serif;
+  font-size: 19px;
+  fill: var(--crust);
+}
+
+.value.prod { fill: #ffd8c9; }
+.value.click { fill: #d6efc3; }
+.value.gold { fill: #ffe39a; }
+
+.legend {
+  margin: 0;
+  font-size: 11px;
+  color: var(--faint);
+  text-align: center;
+}
+
+.totals {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.total {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 7px 5px 8px;
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: 2px;
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+
+.totalLabel {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.totalValue {
+  font-family: 'Alfa Slab One', Georgia, serif;
+  font-size: 21px;
+  line-height: 1.1;
+}
+
+.total.prod .totalValue { color: var(--tom); }
+.total.click .totalValue { color: var(--bas); }
+.total.gold .totalValue { color: var(--gold); }
+
+.totalEffect {
+  font-size: 10.5px;
+  color: var(--dim);
+}
+
+.draftActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.minor {
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--card-alt);
+  border: 2px solid var(--line);
+  border-radius: 2px;
+  box-shadow: var(--shadow-sm);
+}
+
+.minor:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.minor:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Four, loupe et réserve                                              */
+/* ------------------------------------------------------------------ */
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.box {
+  padding: 11px 12px 12px;
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: 2px;
+  box-shadow: var(--shadow);
+}
+
+.boxTitle {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 7px;
+}
+
+.hint {
+  margin: 7px 0 0;
+  font-size: 11.5px;
+  color: var(--faint);
+}
+
+.effects {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12.5px;
+  color: var(--dim);
+}
+
+.bake {
+  margin-top: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  font-family: 'Alfa Slab One', Georgia, serif;
+  font-size: 14px;
+  text-transform: uppercase;
+  color: var(--tom-ink);
+  background: var(--tom);
+  border: 2px solid var(--line);
+  border-radius: 2px;
+  box-shadow: var(--shadow);
+}
+
+.bake:active:not(:disabled) {
+  transform: translate(3px, 3px);
+  box-shadow: none;
+}
+
+.bake:disabled {
+  color: var(--dim);
+  background: var(--card-alt);
+  box-shadow: none;
+}
+
+.preview {
+  margin: 7px 0 0;
+  font-size: 11.5px;
+  color: var(--bas);
+  font-weight: 700;
+}
+
+.lensStat {
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.lensRows {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  font-size: 12.5px;
+}
+
+.lensRows li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+  border-bottom: 1px dashed var(--line-soft);
+}
+
+.lensRows li:last-child {
+  border-bottom: none;
+}
+
+.lensTotal {
+  margin-top: 2px;
+  padding-top: 5px !important;
+  border-top: 2px solid var(--line);
+  font-weight: 700;
+}
+
+.up { color: var(--bas); }
+.down { color: var(--tom); }
+
+.pantry {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 7px;
+}
+
+.ing {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 8px;
+  align-items: center;
+  padding: 7px 8px 8px;
+  text-align: left;
+  background: var(--card-alt);
+  border: 2px solid var(--line);
+  border-radius: 2px;
+}
+
+.ing svg {
+  grid-row: span 2;
+  color: var(--tom);
+}
+
+.ing[data-stat='click'] svg { color: var(--bas); }
+.ing[data-stat='gold'] svg { color: var(--gold); }
+.ing[data-stat='none'] svg { color: var(--dim); }
+
+.ing[aria-pressed='true'] {
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+  transform: translate(-1px, -1px);
+}
+
+.ing:disabled {
+  opacity: 0.5;
+}
+
+.ingName {
+  font-weight: 700;
+  font-size: 12.5px;
+}
+
+.ingRule {
+  font-size: 10.5px;
+  line-height: 1.3;
+  color: var(--dim);
+}
+
+.eraser {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 900px) {
+  .board {
+    grid-template-columns: minmax(0, 440px) minmax(0, 1fr);
+  }
+}

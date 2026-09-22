@@ -23,12 +23,23 @@ export const MAX_CATCHUP_SECONDS = 5;
 /** Sauvegarde. */
 export const SAVE_KEY = 'pizza-tycoon-save';
 export const SAVE_BACKUP_KEY = 'pizza-tycoon-save-corrupted';
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 export const AUTOSAVE_SECONDS = 30;
 
 /** Progression hors ligne (améliorable par l'arbre de prestige en Phase 3). */
 export const OFFLINE_BASE_EFFICIENCY = 0.5;
 export const OFFLINE_BASE_CAP_SECONDS = 8 * 3600;
+
+/**
+ * La Pizza du Chef : huit parts, et un four qui ne se rallume qu'une fois par heure
+ * de JEU. Sans ce délai, on referait sa garniture toutes les cinq minutes selon qu'on
+ * clique ou qu'on s'absente — une corvée d'optimisation, pas un choix.
+ */
+export const CHEF_SLICES = 8;
+export const CHEF_BAKE_COOLDOWN = 3600;
+
+/** Plafond de la réduction du délai entre deux pizzas d'or (en %). */
+export const CHEF_GOLD_CAP = 50;
 
 /** Valeur de base d'un clic, en pizzas. */
 export const BASE_CLICK_POWER = 1;

@@ -6,9 +6,12 @@
  * la même couleur (`currentColor`), donc le thème pilote entièrement le rendu.
  */
 import type { GeneratorId } from '../../data/generators.ts';
+import type { ToppingId } from '../../data/toppings.ts';
 
 export type PictoName =
-  | GeneratorId | 'click' | 'synergy' | 'recette' | 'event' | 'sparkle' | 'trophy' | 'lock';
+  | GeneratorId | ToppingId
+  | 'click' | 'synergy' | 'recette' | 'event' | 'sparkle' | 'trophy' | 'lock'
+  | 'chef' | 'gomme';
 
 const PATHS: Record<PictoName, string> = {
   // --- les dix cuisines ---
@@ -72,6 +75,33 @@ const PATHS: Record<PictoName, string> = {
     + '<path d="M12 6.6l.9 1.9 2 .3-1.45 1.45.35 2.05L12 11.3l-1.8 1 .35-2.05L9.1 8.8l2-.3z"/>',
   lock:
     '<rect x="5" y="10.4" width="14" height="9.6" rx="1.6"/><path d="M8.5 10.4V7.7a3.5 3.5 0 0 1 7 0v2.7"/>',
+  chef:
+    '<path d="M7 20.4h10v-3.8H7z"/>'
+    + '<path d="M7 16.6c-2.5-.6-4-2.4-4-4.6a4.1 4.1 0 0 1 4.5-4 4.3 4.3 0 0 1 8 0 4.1 4.1 0 0 1 4.5 4c0 2.2-1.5 4-4 4.6"/>',
+
+  // --- les neuf ingrédients de « La Pizza du Chef » ---
+  tomate:
+    '<circle cx="12" cy="12" r="8"/>'
+    + '<path d="M12 6.5c1.6 1.6 1.6 3.4 0 5M7.3 14.7c2.2-.6 3.8.2 4.7 1.9M16.7 14.7c-2.2-.6-3.8.2-4.7 1.9"/>',
+  basilic:
+    '<path d="M5 19C5 11 11 5 19 5c0 8-6 14-14 14z"/><path d="M5 19l8-8"/>',
+  mozzarella:
+    '<circle cx="12" cy="12" r="7.5"/><path d="M8.6 10.2a3.8 3.8 0 0 1 3-2.6"/>',
+  champignon:
+    '<path d="M4 12.5a8 7 0 0 1 16 0z"/><path d="M10 12.5V18a2 2 0 0 0 4 0v-5.5"/>',
+  piment:
+    '<path d="M7.5 8.5c0 6.5 3.5 11 11.5 11.5-5.5-2.5-7-7-7-11.5"/>'
+    + '<path d="M7.5 8.5c1.2-1.9 3.2-1.9 4.5 0"/><path d="M9.8 7c0-1.6.9-3 2.4-3.5"/>',
+  olive:
+    '<ellipse cx="12" cy="12" rx="5.5" ry="7.5"/><circle cx="12" cy="12" r="1.8"/>',
+  oignon:
+    '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="2"/>',
+  jambon:
+    '<path d="M4.5 9.5c3-4.2 12-4.2 15 0v5c-3 4.2-12 4.2-15 0z"/><path d="M8 11.5c2.4-1.2 5.6-1.2 8 0"/>',
+  ananas:
+    '<path d="M4 18.5 12 5l8 13.5z"/><path d="M7.6 14.2h8.8M5.9 17h12.2"/>',
+  gomme:
+    '<path d="M4 16.5 13.5 7l5 5L9 21.5H6z"/><path d="M11 9.5l5 5M9 21.5h11"/>',
 };
 
 type Props = {

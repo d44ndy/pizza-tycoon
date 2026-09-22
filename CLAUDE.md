@@ -68,6 +68,7 @@ src/
     challenges.ts règles en vigueur, entrée, sortie et validation des défis
     expansion.ts  couche 2 : Contrats, villes, transcendance
     news.ts      Gazette de la Pâte : dépêches disponibles et choix de la suivante
+    chefPizza.ts La Pizza du Chef : évaluation d'une garniture, four et découvertes
     automation.ts pétrisseur et acheteurs automatiques (arbre de prestige)
     format.ts    format() : standard / scientifique / ingénieur (+ formatInt, formatTime)
     rng.ts       RNG déterministe seedé (mulberry32), graine stockée dans l'état
@@ -87,6 +88,7 @@ src/
     challenges.ts les 8 défis : contrainte, objectif, récompense
     cities.ts    les 6 villes de la couche 2 et leurs effets
     news.ts      les 51 dépêches de la Gazette et leurs conditions
+    toppings.ts  les 9 ingrédients de La Pizza du Chef et leurs règles
     i18n/fr.ts   TOUS les textes affichés
   store/      pont entre le moteur et React
     gameLoop.ts  rAF + accumulateur à pas fixe, autosave, hors ligne, actions exposées
@@ -256,6 +258,39 @@ place l'ouverture de la couche 2 autour de 2 à 4 jours, comme prévu au cahier 
 - **Raccourcis** : Espace, 1…0, B, U. Ils se taisent dans un champ de saisie, quand une fenêtre
   de confirmation est ouverte, et ignorent la répétition de touche (pas d'auto-clic déguisé).
 
+### La Pizza du Chef
+
+Un puzzle de garniture, débloqué par la **Pizzeria de quartier**. Huit parts en cercle :
+chaque ingrédient a une valeur de base et influence ses **voisines** (i ± 1) ou la part
+**d'en face** (i + 4). Les influences s'**additionnent** (`valeur = base × (1 + Σ)`), jamais
+elles ne se multiplient — c'est la seule protection contre une combinaison qui s'emballe.
+
+Les trois totaux se convertissent en effets permanents, agrégés comme tout le reste par
+`permanentEffects()` : 1 point de production = +1 % de production, 1 point de pétrissage
+= +1 % au clic, 2 points de pizzas d'or = 1 % de délai en moins (plafonné à 50 %).
+
+- **Deux garnitures** cohabitent : `draft` (celle qu'on manipule) et `baked` (celle au four,
+  la seule qui donne des bonus). Essayer ne coûte donc jamais rien.
+- **Le four ne se rallume qu'une heure de JEU** après une fournée. Sans ce délai, on
+  referait sa garniture toutes les cinq minutes selon qu'on clique ou qu'on s'absente :
+  une corvée d'optimisation, pas un choix.
+- **Les ingrédients se découvrent** avec leur cuisine (Pizzeria, Franchise, Usine, Robot)
+  et ne se reperdent jamais — ni au prestige, ni à la transcendance. C'est une recette,
+  pas un stock.
+
+Les règles ont été **mesurées, pas devinées** : chacune des trois versions a été évaluée
+sur les **43 046 721 garnitures possibles** (9⁸). Les deux premières avaient un optimum
+unique qui écrasait le reste (la pizza à l'ananas, puis l'alternance piment/champignon).
+La version retenue a trois championnes distinctes, une par style de jeu :
+
+| Style | Garniture | Record |
+|---|---|---|
+| Idle | margherita (tomate/basilic alternés) | 80 production |
+| Actif | champignons et oignons, motif `CCNCNNCN` | 160 pétrissage |
+| Chasseur de pizzas d'or | hawaïenne (jambon/ananas alternés) | ×2,13 (production × fréquence) |
+
+Ces trois records sont vérifiés par `tests/chef.test.ts` : si une règle bouge, le test tombe.
+
 ### La Gazette de la Pâte
 
 Un bandeau de fausses dépêches dont le ton suit l'empire (du voisin qui se plaint jusqu'à la
@@ -265,7 +300,7 @@ celles déjà disponibles au chargement comptent comme vues. Désactivable dans 
 
 ### Sauvegarde
 
-Clé `pizza-tycoon-save`, champ `version` + table `MIGRATIONS` appliquée en chaîne au chargement.
+Clé `pizza-tycoon-save`, champ `version` (**4**) + table `MIGRATIONS` appliquée en chaîne au chargement.
 Une sauvegarde illisible n'est **jamais** écrasée : elle est recopiée dans
 `pizza-tycoon-save-corrupted` et le jeu propose au joueur de l'exporter.
 
@@ -292,6 +327,7 @@ service worker enregistré sur le bon scope, sauvegarde locale fonctionnelle.
 | 3 | Prestige « Recette Secrète » (⭐ Étoiles), arbre de compétences, automatisation | ✅ |
 | 4 | 8 défis + récompenses | ✅ |
 | 5 | Prestige couche 2 « Expansion Mondiale » (villes), PWA, sons, déploiement GitHub Pages | ✅ |
+| + | Confort de jeu, Gazette de la Pâte, mini-jeu « La Pizza du Chef » | ✅ |
 
 Le jeu est complet. Pour aller plus loin, les points d'extension restent les mêmes :
 - `formulas.globalMultiplier()` : pipeline unique (hauts faits, Étoiles, arbre, défis, villes).

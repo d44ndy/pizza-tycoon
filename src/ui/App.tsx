@@ -15,6 +15,7 @@ import { achievementsOwnedCount } from '../engine/achievements.ts';
 import { canPrestige, expansionLayer, recipeLayer } from '../engine/prestige.ts';
 import { challengesUnlocked, completedCount } from '../engine/challenges.ts';
 import { expansionRevealed } from '../engine/expansion.ts';
+import { chefUnlocked } from '../engine/chefPizza.ts';
 import { doRaiseFlag, startLoop } from '../store/gameLoop.ts';
 import { useGameStore } from '../store/gameStore.ts';
 import { Tabs } from './Tabs.tsx';
@@ -32,6 +33,7 @@ import { GeneratorList } from './panels/GeneratorList.tsx';
 import { OptionsPanel } from './panels/OptionsPanel.tsx';
 import { PrestigePanel } from './panels/PrestigePanel.tsx';
 import { ChallengesPanel } from './panels/ChallengesPanel.tsx';
+import { ChefPanel } from './panels/ChefPanel.tsx';
 import { ExpansionPanel } from './panels/ExpansionPanel.tsx';
 import { StatsPanel } from './panels/StatsPanel.tsx';
 import { UpgradesPanel } from './panels/UpgradesPanel.tsx';
@@ -82,6 +84,8 @@ export function App() {
    */
   const showChallenges = challengesUnlocked(state) || completedCount(state) > 0;
   const showExpansion = expansionRevealed(state);
+  // Le four du chef s'ouvre avec la Pizzeria de quartier, et ne se referme jamais.
+  const showChef = chefUnlocked(state);
   const showTabs = anyGenerator || anyAchievement || showPrestige || showChallenges || showExpansion;
 
   useKeyboardShortcuts(state.ui.tab, sound);
@@ -113,6 +117,7 @@ export function App() {
         <div className={styles.nav}>
           <Tabs
             showAchievements={anyAchievement}
+            showChef={showChef}
             showPrestige={showPrestige}
             showChallenges={showChallenges}
             showExpansion={showExpansion}
@@ -142,6 +147,7 @@ export function App() {
         </main>
       )}
 
+      {tab === 'chef' && <main className={styles.single}><ChefPanel /></main>}
       {tab === 'succes' && <main className={styles.single}><AchievementsPanel /></main>}
       {tab === 'prestige' && <main className={styles.single}><PrestigePanel /></main>}
       {tab === 'defis' && <main className={styles.single}><ChallengesPanel /></main>}

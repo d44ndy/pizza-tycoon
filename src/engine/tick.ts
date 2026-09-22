@@ -11,6 +11,7 @@ import { addPizzas, updateUnlocks } from './core.ts';
 import { checkAchievements } from './achievements.ts';
 import { updateEvents } from './events.ts';
 import { runAutomation } from './automation.ts';
+import { revealToppings } from './chefPizza.ts';
 import { checkChallengeCompletion } from './challenges.ts';
 import type { ChallengeDef } from '../data/challenges.ts';
 import { TICK_SECONDS } from '../data/config.ts';
@@ -45,6 +46,7 @@ export function tick(
   };
   next = addPizzas(next, production.mul(dt));
   next = updateUnlocks(next);
+  next = revealToppings(next);
   next = updateEvents(next);
   next = runAutomation(next, dt);
 

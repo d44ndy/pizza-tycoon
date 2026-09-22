@@ -15,6 +15,7 @@ import { OFFLINE_BASE_CAP_SECONDS, OFFLINE_BASE_EFFICIENCY } from '../data/confi
 import { JACKPOT_SECONDS } from '../data/events.ts';
 import { CHALLENGES_BY_ID } from '../data/challenges.ts';
 import { CITIES, CITY_CAPS, type CityId } from '../data/cities.ts';
+import { chefEffects, NO_CHEF_EFFECTS } from './chefPizza.ts';
 
 /** Couche de prestige vide, utilisée tant que le joueur n'a jamais prestigé. */
 export const EMPTY_LAYER: PrestigeLayerState = {
@@ -123,9 +124,9 @@ const DEFAULT_EFFECTS: PermanentEffects = {
 };
 
 /**
- * Agrège TOUS les effets permanents : nœuds de l'arbre de prestige et récompenses
- * des défis validés. Point d'entrée unique, pour qu'aucune source d'effet ne puisse
- * être oubliée par un appelant.
+ * Agrège TOUS les effets permanents : nœuds de l'arbre de prestige, récompenses des
+ * défis validés, villes de la couche 2 et garniture au four. Point d'entrée unique,
+ * pour qu'aucune source d'effet ne puisse être oubliée par un appelant.
  *
  * Les effets « multiplicateurs » se multiplient entre eux ; les effets « valeur »
  * (rendement hors ligne, plafond, bonus par Étoile…) prennent le MEILLEUR,
@@ -146,7 +147,9 @@ export function permanentEffects(state: GameState): PermanentEffects {
   const cityLevels = CITIES.map((def) => [def, cityLevel(state, def.id)] as const)
     .filter(([, level]) => level > 0);
 
-  if (sources.length === 0 && cityLevels.length === 0) return DEFAULT_EFFECTS;
+  const chef = chefEffects(state);
+  const noChef = chef === NO_CHEF_EFFECTS;
+  if (sources.length === 0 && cityLevels.length === 0 && noChef) return DEFAULT_EFFECTS;
 
   const result: PermanentEffects = { ...DEFAULT_EFFECTS, startGenerators: {} };
   for (const effect of sources) {
@@ -204,6 +207,14 @@ export function permanentEffects(state: GameState): PermanentEffects {
         );
         break;
     }
+  }
+
+  // La Pizza du Chef. Elle s'agrège ici comme tout le reste : c'est ce qui garantit
+  // qu'aucun appelant ne peut l'oublier, ni la compter deux fois.
+  if (!noChef) {
+    result.globalMult = result.globalMult.mul(chef.production);
+    result.clickMult = result.clickMult.mul(chef.click);
+    result.eventFrequency *= chef.eventFrequency;
   }
 
   return result;

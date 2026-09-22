@@ -13,8 +13,10 @@ import { ACHIEVEMENTS_BY_ID, type FlagId } from '../data/achievements.ts';
 import { PRESTIGE_NODES_BY_ID } from '../data/prestige.ts';
 import { CITIES_BY_ID, type CityId } from '../data/cities.ts';
 import { CHALLENGES_BY_ID } from '../data/challenges.ts';
+import { TOPPINGS_BY_ID, type ToppingId } from '../data/toppings.ts';
+import { emptyLayout } from './chefPizza.ts';
 import type { PrestigeLayerId, PrestigeLayerState } from './state.ts';
-import { SAVE_BACKUP_KEY, SAVE_KEY, SAVE_VERSION } from '../data/config.ts';
+import { CHEF_SLICES, SAVE_BACKUP_KEY, SAVE_KEY, SAVE_VERSION } from '../data/config.ts';
 
 /** Format sérialisé (les Decimal deviennent des chaînes). */
 type SavedGenerator = { owned: number; totalBought: number; unlocked: boolean };
@@ -31,6 +33,13 @@ export type SaveData = {
   flags: string[];
   /** Défi en cours et défis validés. */
   challenges: { active: string | null; completed: Record<string, number> };
+  /** La Pizza du Chef : garniture en cours, garniture au four, ingrédients découverts. */
+  chef: {
+    draft: (ToppingId | null)[];
+    baked: (ToppingId | null)[] | null;
+    bakedAt: number | null;
+    unlocked: ToppingId[];
+  };
   /** Prochaine pizza d'or, en secondes de jeu. Les effets en cours ne sont pas sauvegardés. */
   nextEventAt: number;
   stats: {
@@ -73,6 +82,13 @@ const MIGRATIONS: Record<number, (save: SaveData) => SaveData> = {
     version: 3,
     challenges: { active: null, completed: {} },
   }),
+  // v3 -> v4 : arrivée de « La Pizza du Chef ». Le four est neuf et vide ; les
+  // ingrédients seront redécouverts au premier tick par `revealToppings()`.
+  3: (save) => ({
+    ...save,
+    version: 4,
+    chef: { draft: emptyLayout(), baked: null, bakedAt: null, unlocked: [] },
+  }),
 };
 
 /* ------------------------------------------------------------------ */
@@ -107,6 +123,12 @@ export function toSaveData(state: GameState, now: number = Date.now()): SaveData
     challenges: {
       active: state.challenges.active,
       completed: { ...state.challenges.completed },
+    },
+    chef: {
+      draft: [...state.chef.draft],
+      baked: state.chef.baked ? [...state.chef.baked] : null,
+      bakedAt: state.chef.bakedAt,
+      unlocked: [...state.chef.unlocked],
     },
     nextEventAt: state.events.nextSpawnAt,
     stats: {
@@ -156,6 +178,17 @@ function dec(value: unknown, fallback = 0): Decimal {
 
 function bool(value: unknown, fallback: boolean): boolean {
   return typeof value === 'boolean' ? value : fallback;
+}
+
+/** Relit une garniture : toujours huit parts, et rien d'autre que des ingrédients connus. */
+function readLayout(raw: unknown): (ToppingId | null)[] {
+  const layout = emptyLayout();
+  if (!Array.isArray(raw)) return layout;
+  for (let i = 0; i < CHEF_SLICES; i++) {
+    const id = raw[i];
+    if (typeof id === 'string' && TOPPINGS_BY_ID[id as ToppingId]) layout[i] = id as ToppingId;
+  }
+  return layout;
 }
 
 /** Applique les migrations nécessaires pour amener la sauvegarde à la version courante. */
@@ -244,6 +277,21 @@ export function fromSaveData(raw: unknown): GameState {
     ? activeChallengeId
     : null;
 
+  // La Pizza du Chef : une garniture est toujours ramenée à huit parts, et les
+  // ingrédients inconnus (d'une version ultérieure) sont ignorés, pas refusés.
+  const chefDraft = readLayout(migrated.chef?.draft);
+  const bakedRaw = migrated.chef?.baked;
+  const chefBaked = Array.isArray(bakedRaw) ? readLayout(bakedRaw) : null;
+  const chefUnlocked: ToppingId[] = [];
+  for (const id of Array.isArray(migrated.chef?.unlocked) ? migrated.chef.unlocked : []) {
+    if (TOPPINGS_BY_ID[id as ToppingId] && !chefUnlocked.includes(id as ToppingId)) {
+      chefUnlocked.push(id as ToppingId);
+    }
+  }
+  const bakedAt = typeof migrated.chef?.bakedAt === 'number' && Number.isFinite(migrated.chef.bakedAt)
+    ? migrated.chef.bakedAt
+    : null;
+
   const s = migrated.stats;
   const state: GameState = {
     ...base,
@@ -258,6 +306,7 @@ export function fromSaveData(raw: unknown): GameState {
       nextSpawnAt: Math.max(0, num(migrated.nextEventAt, 0)),
     },
     challenges: { active, completed: completedChallenges },
+    chef: { draft: chefDraft, baked: chefBaked, bakedAt, unlocked: chefUnlocked },
     stats: {
       createdAt: num(s?.createdAt, base.stats.createdAt),
       playTimeRun: Math.max(0, num(s?.playTimeRun, 0)),

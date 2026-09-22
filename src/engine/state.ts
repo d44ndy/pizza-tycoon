@@ -11,13 +11,15 @@ import { GENERATORS, type GeneratorId } from '../data/generators.ts';
 import { SAVE_VERSION } from '../data/config.ts';
 import type { EventKind } from '../data/events.ts';
 import type { FlagId } from '../data/achievements.ts';
+import type { ToppingId } from '../data/toppings.ts';
 import type { Notation } from './format.ts';
 
 /** Quantité achetée d'un coup ; 'max' = tout ce que le stock permet. */
 export type BulkMode = 1 | 10 | 100 | 'max';
 
 /** Onglets de l'interface (les suivants arriveront avec leurs phases respectives). */
-export type TabId = 'game' | 'succes' | 'prestige' | 'defis' | 'expansion' | 'stats' | 'options';
+export type TabId =
+  | 'game' | 'chef' | 'succes' | 'prestige' | 'defis' | 'expansion' | 'stats' | 'options';
 
 export type GeneratorState = {
   readonly id: GeneratorId;
@@ -92,6 +94,22 @@ export type ChallengesState = {
   completed: Record<string, number>;
 };
 
+/**
+ * « La Pizza du Chef ». La garniture en cours d'édition (`draft`) et celle au four
+ * (`baked`) sont séparées : on peut essayer cent combinaisons sans rien perdre.
+ * Tout survit au prestige et à la transcendance — c'est une recette, pas un stock.
+ */
+export type ChefState = {
+  /** Garniture en cours d'édition, une case par part (`null` = part nue). */
+  draft: readonly (ToppingId | null)[];
+  /** Garniture au four : la seule qui donne des bonus. `null` avant la première cuisson. */
+  baked: readonly (ToppingId | null)[] | null;
+  /** Instant de la dernière cuisson, en secondes de JEU (`null` = four jamais allumé). */
+  bakedAt: number | null;
+  /** Ingrédients découverts. On n'en retire jamais aucun. */
+  unlocked: readonly ToppingId[];
+};
+
 export type Stats = {
   /** Horodatage de création de la partie. */
   createdAt: number;
@@ -153,6 +171,7 @@ export type GameState = {
   flags: Partial<Record<FlagId, true>>;
   events: EventsState;
   challenges: ChallengesState;
+  chef: ChefState;
   automation: AutomationState;
   stats: Stats;
   settings: Settings;
@@ -190,6 +209,7 @@ export function createInitialState(now: number = Date.now(), seed: number = crea
       clickBurst: { count: 0, since: 0 },
     },
     challenges: { active: null, completed: {} },
+    chef: { draft: [null, null, null, null, null, null, null, null], baked: null, bakedAt: null, unlocked: [] },
     automation: { clickCredit: 0, buyCooldown: 0 },
     stats: {
       createdAt: now,

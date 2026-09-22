@@ -12,6 +12,7 @@ import styles from './Tabs.module.css';
 
 type Props = {
   showAchievements: boolean;
+  showChef: boolean;
   showPrestige: boolean;
   showChallenges: boolean;
   showExpansion: boolean;
@@ -20,6 +21,7 @@ type Props = {
 
 const TABS: Array<[TabId, string, PictoName]> = [
   ['game', t.tabs.game, 'four'],
+  ['chef', t.tabs.chef, 'chef'],
   ['succes', t.tabs.succes, 'trophy'],
   ['prestige', t.tabs.prestige, 'sparkle'],
   ['defis', t.tabs.defis, 'trophy'],
@@ -29,10 +31,11 @@ const TABS: Array<[TabId, string, PictoName]> = [
 ];
 
 export function Tabs({
-  showAchievements, showPrestige, showChallenges, showExpansion, prestigeReady,
+  showAchievements, showChef, showPrestige, showChallenges, showExpansion, prestigeReady,
 }: Props) {
   const tab = useGameStore((s) => s.state.ui.tab);
   const visible = TABS.filter(([id]) => {
+    if (id === 'chef') return showChef;
     if (id === 'succes') return showAchievements;
     if (id === 'prestige') return showPrestige;
     if (id === 'defis') return showChallenges;
