@@ -55,6 +55,18 @@
   flex: none;
 }
 
+/* Une cuisine possédée s'active de temps en temps, chacune à son tour.
+   Douze images : assez pour que le geste se voie, assez peu pour rester saccadé. */
+.picto[data-working='true'] {
+  animation: work 3.4s steps(14, jump-none) infinite;
+}
+
+@keyframes work {
+  0%, 68%, 100% { transform: translateY(0) rotate(0deg); }
+  78% { transform: translateY(-3px) rotate(-10deg); }
+  90% { transform: translateY(0) rotate(7deg); }
+}
+
 .body {
   flex: 1;
   display: flex;

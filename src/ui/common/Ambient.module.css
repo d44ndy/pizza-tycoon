@@ -1,0 +1,79 @@
+.layer {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Derrière les panneaux, qui sont opaques : on n'y met que les grands tampons. */
+.back {
+  z-index: -1;
+}
+
+/* Devant l'interface, mais très en dessous des fenêtres (z-index 90) et de la
+   barre d'onglets : la farine passe devant sans jamais rien cacher. */
+.front {
+  z-index: 3;
+}
+
+/* --- la semoule --- */
+
+.speck {
+  position: absolute;
+  background: var(--ink);
+  opacity: 0.1;
+  border-radius: 1px;
+  animation-name: drift;
+  animation-timing-function: steps(30, jump-none);
+  animation-iteration-count: infinite;
+}
+
+.round {
+  border-radius: 50%;
+  opacity: 0.07;
+}
+
+/* Le grain part et revient : couper les animations fige un décor propre. */
+@keyframes drift {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(var(--dx), var(--dy)) rotate(180deg); }
+  100% { transform: translate(0, 0) rotate(360deg); }
+}
+
+/* --- les deux tampons --- */
+
+.stamp {
+  position: absolute;
+  width: 250px;
+  height: 250px;
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2.5;
+  opacity: 0.05;
+  animation: sway 26s steps(14, jump-none) infinite;
+}
+
+.stampLeft {
+  top: 12%;
+  left: -80px;
+}
+
+.stampRight {
+  bottom: 6%;
+  right: -70px;
+  animation-duration: 34s;
+  animation-direction: reverse;
+}
+
+@keyframes sway {
+  0% { transform: rotate(-6deg) translateY(0); }
+  50% { transform: rotate(4deg) translateY(-18px); }
+  100% { transform: rotate(-6deg) translateY(0); }
+}
+
+/* Sous 900 px, les tampons mangent la place utile : on ne garde que la semoule. */
+@media (max-width: 899px) {
+  .stamp {
+    display: none;
+  }
+}

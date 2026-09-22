@@ -19,6 +19,17 @@
   text-transform: uppercase;
   letter-spacing: 0.02em;
   line-height: 1;
+  /* L'enseigne balance doucement, comme un panneau accroché de travers.
+     Le balancement est sur le titre, pas sur le bouton : sinon il écraserait
+     l'enfoncement du clic (l'œuf de Pâques du titre). */
+  animation: enseigne 11s steps(12, jump-none) infinite;
+  transform-origin: 50% 0;
+}
+
+@keyframes enseigne {
+  0% { transform: rotate(-0.7deg); }
+  50% { transform: rotate(0.7deg); }
+  100% { transform: rotate(-0.7deg); }
 }
 
 /* Le titre est un bouton : dix clics dessus et il se passe quelque chose. */

@@ -19,6 +19,7 @@ import { chefUnlocked } from '../engine/chefPizza.ts';
 import { doRaiseFlag, startLoop } from '../store/gameLoop.ts';
 import { useGameStore } from '../store/gameStore.ts';
 import { Tabs } from './Tabs.tsx';
+import { Ambient } from './common/Ambient.tsx';
 import { BuffBar } from './common/BuffBar.tsx';
 import { ChallengeBanner } from './common/ChallengeBanner.tsx';
 import { NewsTicker } from './common/NewsTicker.tsx';
@@ -99,6 +100,9 @@ export function App() {
 
   return (
     <div className={styles.app}>
+      {/* Le décor de fond. Il ne dépend de rien et ne se redessine jamais. */}
+      <Ambient />
+
       <header className={styles.brand}>
         <h1 className={styles.logo}>
           <button type="button" className={styles.logoButton} onClick={pokeTitle}>

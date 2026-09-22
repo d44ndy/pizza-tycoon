@@ -45,7 +45,12 @@ export function GeneratorRow({ def }: Props) {
         }}
         disabled={!bulk.affordable}
       >
-        <span className={styles.picto}>
+        {/* Une cuisine qui tourne bouge un peu, chacune à son tour (décalage par rang). */}
+        <span
+          className={styles.picto}
+          data-working={gs.owned > 0}
+          style={{ animationDelay: `${def.index * 0.37}s` }}
+        >
           <Picto name={def.id} size={30} />
         </span>
 

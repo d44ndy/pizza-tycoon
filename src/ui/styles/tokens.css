@@ -77,6 +77,15 @@ body {
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
+  /* La trame dérive d'un ou deux pixels à la fois : la page n'est jamais tout à fait
+     immobile, sans que rien ne bouge vraiment sous les yeux du joueur. */
+  animation: trame 48s steps(14, jump-none) infinite;
+}
+
+@keyframes trame {
+  0% { background-position: 0 0; }
+  50% { background-position: 14px 21px; }
+  100% { background-position: 0 0; }
 }
 
 #root {

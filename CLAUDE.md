@@ -49,6 +49,24 @@ Typographies : *Alfa Slab One* pour les titres et les valeurs fortes, *Archivo* 
 Palette : kraft (`--paper`), encre (`--ink`), tomate (`--tom`), basilic (`--bas`).
 Le thème sombre est le même carton, la nuit : uniquement des tokens redéfinis.
 
+**Le décor est vivant, mais il ne bouge pas vraiment.** Une page où seul un compteur
+défile a l'air morte ; une page qui glisse en permanence a l'air d'une publicité. D'où
+trois règles pour toute animation du jeu :
+
+1. **des images, pas des glissements** : toutes les animations sont en `steps()`, comme un
+   tampon qu'on repose — jamais un mouvement lisse ;
+2. **tout revient à son point de départ** (dernière image = première), pour que couper les
+   animations fige un décor propre au lieu d'une image à moitié sortie de l'écran ;
+3. **rien ne doit gêner la lecture** : le décor est soit derrière les panneaux (opaques),
+   soit devant mais sous les 10 % d'opacité.
+
+Ce qui vit, et où : la trame du carton dérive de quelques pixels (`styles/tokens.css`),
+la farine flotte et les deux tampons respirent (`common/Ambient.tsx`, un seul rendu, mémoïsé),
+l'enseigne balance (`App.module.css`), la pizza héros respire et fume dès que quelque chose
+produit (`panels/ClickerPanel`), et chaque cuisine possédée s'active à son tour, décalée
+par son rang (`panels/GeneratorRow`). L'option « animations réduites » et le réglage système
+coupent tout, sans laisser un seul élément de travers.
+
 **Aucun emoji dans l'interface.** Tous les pictogrammes sont dessinés à la main dans
 `src/ui/icons/Picto.tsx` (grille 24×24, trait de 1,6 px, `currentColor`) et la pizza
 héros dans `PizzaMark.tsx`. Un emoji a l'air posé là et change de dessin d'une

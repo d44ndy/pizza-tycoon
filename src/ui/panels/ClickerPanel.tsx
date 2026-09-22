@@ -62,6 +62,18 @@ export function ClickerPanel() {
         </div>
       )}
 
+      {/* Le four tourne : trois volutes montent de derrière la pizza. Elles n'existent
+          que si quelque chose produit, et s'effacent si le joueur coupe les animations. */}
+      {production.gt(0) && (
+        <div className={styles.steamRow}>
+          <svg className={styles.steam} viewBox="0 0 120 66" aria-hidden="true" focusable="false">
+            <path d="M22 64c-6-10 5-13 0-22s4-13 5-21" />
+            <path d="M60 64c-6-11 6-14 1-24s3-14 4-22" />
+            <path d="M98 64c-6-10 5-13 0-22s4-13 5-21" />
+          </svg>
+        </div>
+      )}
+
       <div className={styles.clickZone}>
         <button type="button" className={styles.pizzaButton} onClick={handleClick} aria-label={t.game.clickButton}>
           <PizzaMark className={styles.pizza} />
