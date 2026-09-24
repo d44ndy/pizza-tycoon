@@ -11,10 +11,11 @@ import { achievementMultiplier, achievementsOwnedCount } from '../../engine/achi
 import { formatTime } from '../../engine/format.ts';
 import { useGameStore } from '../../store/gameStore.ts';
 import { Picto, type PictoName } from '../icons/Picto.tsx';
+import { useFormat } from '../useFormat.ts';
 import styles from './AchievementsPanel.module.css';
 
 const ORDER: readonly AchievementCategory[] = [
-  'production', 'cuisines', 'clics', 'ameliorations', 'evenements', 'collection', 'secret',
+  'production', 'cuisines', 'clics', 'ameliorations', 'evenements', 'chef', 'collection', 'secret',
 ];
 
 /**
@@ -28,6 +29,7 @@ export function AchievementsPanel() {
   const achievements = useGameStore((s) => s.state.achievements);
   const state = useGameStore((s) => s.state);
 
+  const { fmtDec } = useFormat();
   const owned = achievementsOwnedCount(state);
   const bonus = achievementMultiplier(state).toNumber();
 
@@ -37,7 +39,7 @@ export function AchievementsPanel() {
         <h2 className={styles.title}>{t.achievements.title}</h2>
         <div className={styles.score}>
           <span className={`${styles.count} num`}>{t.achievements.progress(owned, ACHIEVEMENTS.length)}</span>
-          <span className={styles.bonus}>{t.achievements.bonus(bonus.toFixed(2))}</span>
+          <span className={styles.bonus}>{t.achievements.bonus(fmtDec(bonus))}</span>
         </div>
       </header>
 

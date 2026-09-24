@@ -30,10 +30,16 @@ export type AchievementCondition =
   | { readonly type: 'upgradesOwned'; readonly count: number }
   | { readonly type: 'eventsClicked'; readonly count: number }
   | { readonly type: 'achievementsOwned'; readonly count: number }
-  | { readonly type: 'flag'; readonly flag: FlagId };
+  | { readonly type: 'flag'; readonly flag: FlagId }
+  /**
+   * La Pizza du Chef : la garniture AU FOUR atteint un score. `hunter` est le score du
+   * chasseur de pizzas d'or, (1 + production/100) × (1 + pizzas d'or/100).
+   */
+  | { readonly type: 'chefBaked'; readonly score: 'any' | 'prod' | 'click' | 'hunter'; readonly min: number };
 
 export type AchievementCategory =
-  | 'production' | 'cuisines' | 'clics' | 'ameliorations' | 'evenements' | 'collection' | 'secret';
+  | 'production' | 'cuisines' | 'clics' | 'ameliorations' | 'evenements' | 'chef' | 'collection'
+  | 'secret';
 
 export type AchievementDef = {
   readonly id: string;
@@ -160,6 +166,31 @@ const COLLECTION = tiers('collection', 'collection', [
   ['Mur de tampons', 'Débloquer 75 hauts faits', { type: 'achievementsOwned', count: 75 }],
 ]);
 
+/**
+ * La Pizza du Chef. Les trois records sont ceux trouvés par la recherche exhaustive
+ * sur les 43 millions de garnitures : ils sont atteignables, et on ne peut pas faire mieux.
+ * Les descriptions annoncent le score à battre, jamais la garniture qui y mène.
+ */
+const CHEF: readonly AchievementDef[] = [
+  {
+    id: 'chef-1', name: 'Première fournée du chef', description: 'Enfourner une pizza du chef',
+    category: 'chef', hidden: false, condition: { type: 'chefBaked', score: 'any', min: 0 },
+  },
+  {
+    id: 'chef-2', name: 'La pizza du fainéant', description: 'Enfourner une pizza à 80 de production — le maximum',
+    category: 'chef', hidden: false, condition: { type: 'chefBaked', score: 'prod', min: 80 },
+  },
+  {
+    id: 'chef-3', name: 'La pizza du pétrisseur', description: 'Enfourner une pizza à 160 de pétrissage — le maximum',
+    category: 'chef', hidden: false, condition: { type: 'chefBaked', score: 'click', min: 160 },
+  },
+  {
+    id: 'chef-4', name: 'La pizza du chasseur',
+    description: 'Enfourner la meilleure pizza possible en production × pizzas d’or (×2,13)',
+    category: 'chef', hidden: false, condition: { type: 'chefBaked', score: 'hunter', min: 2.13 },
+  },
+];
+
 /** Les cachés : affichés « ??? » tant qu'ils ne sont pas obtenus. */
 const SECRETS: readonly AchievementDef[] = [
   {
@@ -200,7 +231,7 @@ export const ACHIEVEMENTS: readonly AchievementDef[] = [
   ...STOCK, ...CUMUL, ...DEBIT,
   ...cuisineAchievements(), ...PANOPLIE,
   ...CLICS, ...MAIN,
-  ...AMELIORATIONS, ...EVENEMENTS, ...COLLECTION,
+  ...AMELIORATIONS, ...EVENEMENTS, ...CHEF, ...COLLECTION,
   ...SECRETS,
 ];
 

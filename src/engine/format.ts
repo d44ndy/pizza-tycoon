@@ -111,6 +111,24 @@ export function formatInt(value: number, notation: Notation = 'standard'): strin
   return format(Math.floor(value), notation);
 }
 
+/**
+ * Petit nombre à décimales fixes, à la française : « 1,36 ». Pour les multiplicateurs
+ * et les pourcentages — `toFixed()` écrirait « 1.36 », avec un point anglais.
+ * Au-delà du million, on repasse par `format()`.
+ */
+export function formatDecimal(value: number, digits = 2, notation: Notation = 'standard'): string {
+  if (!Number.isFinite(value)) return '—';
+  if (Math.abs(value) >= 1e6) return format(value, notation);
+  return value
+    .toLocaleString('fr-FR', { minimumFractionDigits: digits, maximumFractionDigits: digits })
+    .replace(/ | /g, ' ');
+}
+
+/** Multiplicateur : « ×1,36 ». */
+export function formatMultiplier(value: number, digits = 2, notation: Notation = 'standard'): string {
+  return `×${formatDecimal(value, digits, notation)}`;
+}
+
 /** Durée lisible : « 3 j 4 h », « 2 h 13 min », « 45 s ». */
 export function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return '—';

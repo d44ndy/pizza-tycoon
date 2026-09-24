@@ -9,6 +9,7 @@ import {
   ACHIEVEMENTS, ACHIEVEMENT_BONUS, type AchievementCondition, type AchievementDef, type FlagId,
 } from '../data/achievements.ts';
 import { upgradesOwnedCount } from './upgrades.ts';
+import { evaluatePizza } from './chefPizza.ts';
 
 /**
  * Évalue une condition de haut fait.
@@ -40,6 +41,18 @@ export function achievementMet(state: GameState, condition: AchievementCondition
       return Object.keys(state.achievements).length >= condition.count;
     case 'flag':
       return state.flags[condition.flag] === true;
+    case 'chefBaked': {
+      const baked = state.chef.baked;
+      if (!baked) return false;
+      const totals = evaluatePizza(baked).totals;
+      switch (condition.score) {
+        case 'any': return true;
+        case 'prod': return totals.prod >= condition.min;
+        case 'click': return totals.click >= condition.min;
+        // Arrondi au centième, comme l'affiche la description : 1,72 × 1,24 = 2,1328.
+        case 'hunter': return Math.round((1 + totals.prod / 100) * (1 + totals.gold / 100) * 100) / 100 >= condition.min;
+      }
+    }
   }
 }
 

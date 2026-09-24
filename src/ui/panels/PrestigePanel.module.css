@@ -26,6 +26,9 @@
 }
 
 .stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-family: 'Alfa Slab One', Georgia, serif;
   font-size: 20px;
   color: var(--gold);
@@ -279,6 +282,9 @@
 }
 
 .nodeCost {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 11.5px;
   font-weight: 700;
   color: var(--gold);

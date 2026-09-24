@@ -6,6 +6,8 @@
 export const fr = {
   game: {
     title: 'Pizza Tycoon',
+    /** Titre de l'onglet du navigateur : le stock se lit sans rouvrir le jeu. */
+    documentTitle: (amount: string) => `${amount} pizzas · Pizza Tycoon`,
     currency: 'pizzas',
     currencyOne: 'pizza',
     perSecond: '/s',
@@ -75,12 +77,15 @@ export const fr = {
     lockedHint: 'Haut fait secret',
     unlockedAt: (time: string) => `obtenu à ${time}`,
     toast: 'Haut fait !',
+    toastMany: (count: number) => `${count} hauts faits !`,
+    toastMore: (count: number) => ` et ${count} autre${count > 1 ? 's' : ''}`,
     categories: {
       production: 'Production',
       cuisines: 'Cuisines',
       clics: 'Pétrissage',
       ameliorations: 'Améliorations',
       evenements: 'Pizzas d’or',
+      chef: 'La Pizza du Chef',
       collection: 'Collection',
       secret: 'Secrets',
     },
@@ -114,7 +119,7 @@ export const fr = {
     respecAction: 'Refaire et recommencer',
     respecDone: 'Arbre remis à plat',
     nodeOwned: 'Acquis',
-    nodeCost: (cost: number) => `${cost} ⭐`,
+    nodeCost: (cost: number) => `${cost} Étoile${cost > 1 ? 's' : ''}`,
     nodeLocked: 'Verrouillé',
     nodeRequires: (names: string) => `Nécessite : ${names}`,
     cantAfford: 'Pas assez d’Étoiles',
@@ -151,7 +156,7 @@ export const fr = {
     upgrade: 'Agrandir',
     level: (level: number) => `Niveau ${level}`,
     notFounded: 'Pas encore fondée',
-    cost: (contracts: number) => `${contracts} ⛨`,
+    cost: (contracts: number) => `${contracts} Contrat${contracts > 1 ? 's' : ''}`,
     locked: (city: string) => `Fonde ${city} d’abord`,
     cityOutput: (amount: string) => `${amount} pizzas/s`,
   },

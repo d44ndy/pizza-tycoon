@@ -76,7 +76,7 @@ export function ClickerPanel() {
 
       <div className={styles.clickZone}>
         <button type="button" className={styles.pizzaButton} onClick={handleClick} aria-label={t.game.clickButton}>
-          <PizzaMark className={styles.pizza} />
+          <PizzaMark className={styles.pizza} toppings={state.chef.baked} />
         </button>
         <FloatingNumbers pops={pops} onDone={(id) => setPops((list) => list.filter((p) => p.id !== id))} />
       </div>

@@ -21,7 +21,7 @@ type Props = { def: GeneratorDef };
 
 export function GeneratorRow({ def }: Props) {
   const state = useGameStore((s) => s.state);
-  const { fmt, fmtInt } = useFormat();
+  const { fmt, fmtInt, fmtDec } = useFormat();
   const sound = useSound();
 
   const gs = state.generators[def.id];
@@ -108,7 +108,7 @@ export function GeneratorRow({ def }: Props) {
               </div>
               <div>
                 {t.generators.tooltipShare} :{' '}
-                <span className="num">{(productionShare(state, def.id) * 100).toFixed(1)} %</span>
+                <span className="num">{fmtDec(productionShare(state, def.id) * 100, 1)} %</span>
               </div>
               <div>
                 {t.generators.tooltipMultiplier} : <span className="num">×{multiplier}</span>

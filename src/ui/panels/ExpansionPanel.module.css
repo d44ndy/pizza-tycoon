@@ -26,6 +26,9 @@
 }
 
 .contracts {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-family: 'Alfa Slab One', Georgia, serif;
   font-size: 20px;
   color: var(--bas);
@@ -206,6 +209,9 @@
 .cityButton:disabled { opacity: 0.45; box-shadow: none; }
 
 .cityCost {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   color: var(--gold);
 }
 

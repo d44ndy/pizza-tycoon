@@ -11,7 +11,7 @@ import type { ToppingId } from '../../data/toppings.ts';
 export type PictoName =
   | GeneratorId | ToppingId
   | 'click' | 'synergy' | 'recette' | 'event' | 'sparkle' | 'trophy' | 'lock'
-  | 'chef' | 'gomme';
+  | 'chef' | 'gomme' | 'etoile' | 'contrat';
 
 const PATHS: Record<PictoName, string> = {
   // --- les dix cuisines ---
@@ -75,6 +75,12 @@ const PATHS: Record<PictoName, string> = {
     + '<path d="M12 6.6l.9 1.9 2 .3-1.45 1.45.35 2.05L12 11.3l-1.8 1 .35-2.05L9.1 8.8l2-.3z"/>',
   lock:
     '<rect x="5" y="10.4" width="14" height="9.6" rx="1.6"/><path d="M8.5 10.4V7.7a3.5 3.5 0 0 1 7 0v2.7"/>',
+  // --- monnaies de prestige (elles remplacent les emoji ⭐ et ⛨) ---
+  etoile:
+    '<path d="M12 3.2l2.6 5.5 6 .8-4.4 4.1 1.1 5.9L12 16.6l-5.3 2.9 1.1-5.9-4.4-4.1 6-.8z"/>',
+  contrat:
+    '<path d="M6 3.5h8.5L18 7v13.5H6z"/><path d="M14.5 3.5V7H18"/><path d="M8.6 9.6h5.2M8.6 12.4h6.8"/>'
+    + '<circle cx="14.2" cy="16.6" r="2.1"/><path d="M13.3 18.5l-.7 2.4M15.1 18.5l.7 2.4"/>',
   chef:
     '<path d="M7 20.4h10v-3.8H7z"/>'
     + '<path d="M7 16.6c-2.5-.6-4-2.4-4-4.6a4.1 4.1 0 0 1 4.5-4 4.3 4.3 0 0 1 8 0 4.1 4.1 0 0 1 4.5 4c0 2.2-1.5 4-4 4.6"/>',

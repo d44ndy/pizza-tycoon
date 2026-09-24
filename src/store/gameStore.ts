@@ -20,6 +20,12 @@ export type Toast = {
   kind: 'achievement' | 'info';
   title: string;
   text: string;
+  /**
+   * Hauts faits regroupés dans cette notification. Quand plusieurs tombent d'un coup
+   * (au chargement, après un achat groupé), ils partagent une seule notification au
+   * lieu d'empiler une colonne qui masque la moitié de l'écran.
+   */
+  names?: readonly string[];
 };
 
 export type GameStore = Snapshot & {
@@ -52,9 +58,17 @@ export const useGameStore = create<GameStore>((set) => ({
   setOffline: (offline) => set({ offline }),
   setCorrupted: (corrupted) => set({ corrupted }),
   setToast: (toast) => set({ toast }),
-  // On garde au plus quatre notifications à l'écran : au déblocage en cascade,
-  // mieux vaut en perdre que d'empiler une colonne illisible.
-  pushToast: (toast) => set((s) => ({ toasts: [...s.toasts, { ...toast, id: nextToastId++ }].slice(-4) })),
+  // Un haut fait qui arrive alors que le précédent est encore affiché le rejoint :
+  // même notification, même minuterie relancée, et pas de nouveau son.
+  // Au-delà, on garde au plus trois notifications à l'écran.
+  pushToast: (toast) => set((s) => {
+    const last = s.toasts[s.toasts.length - 1];
+    if (toast.names && last?.names) {
+      const merged: Toast = { ...last, names: [...last.names, ...toast.names] };
+      return { toasts: [...s.toasts.slice(0, -1), merged] };
+    }
+    return { toasts: [...s.toasts, { ...toast, id: nextToastId++ }].slice(-3) };
+  }),
   dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
 }));
 

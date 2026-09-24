@@ -26,7 +26,7 @@ const BRANCH_ORDER: readonly PrestigeBranch[] = ['fournil', 'salle', 'nuit', 'br
 export function PrestigePanel() {
   const state = useGameStore((s) => s.state);
   const setToast = useGameStore((s) => s.setToast);
-  const { fmt } = useFormat();
+  const { fmt, fmtMult } = useFormat();
   const [confirming, setConfirming] = useState(false);
   const [respeccing, setRespeccing] = useState(false);
   const invested = spentStars(state);
@@ -57,7 +57,7 @@ export function PrestigePanel() {
       <header className={styles.head}>
         <h2 className={styles.title}>{t.prestige.title}</h2>
         <div className={styles.score}>
-          <span className={`${styles.stars} num`}>{fmt(layer.currency)} ⭐</span>
+          <span className={`${styles.stars} num`}>{fmt(layer.currency)} <Picto name="etoile" size={20} /></span>
           <span className={styles.scoreLabel}>{t.prestige.inBank}</span>
         </div>
       </header>
@@ -74,8 +74,8 @@ export function PrestigePanel() {
           <span className="num">{layer.resets}</span>
         </div>
         <div className={styles.summaryRow}>
-          <span>{t.prestige.bonus((permanentEffects(state).starBonus * 100).toFixed(0))}</span>
-          <span className="num">×{starMultiplier(state).toNumber().toFixed(2)}</span>
+          <span>{t.prestige.bonus(String(Math.round(permanentEffects(state).starBonus * 100)))}</span>
+          <span className="num">{fmtMult(starMultiplier(state).toNumber())}</span>
         </div>
       </div>
 
@@ -187,9 +187,13 @@ function Node({ def }: { def: PrestigeNodeDef }) {
     >
       <span className={styles.nodeTop}>
         <span className={styles.nodeName}>{def.name}</span>
-        <span className={`${styles.nodeCost} num`}>
-          {owned ? t.prestige.nodeOwned : t.prestige.nodeCost(def.cost)}
-        </span>
+        {owned ? (
+          <span className={`${styles.nodeCost} num`}>{t.prestige.nodeOwned}</span>
+        ) : (
+          <span className={`${styles.nodeCost} num`} aria-label={t.prestige.nodeCost(def.cost)}>
+            {def.cost} <Picto name="etoile" size={13} />
+          </span>
+        )}
       </span>
       <span className={styles.nodeDesc}>{def.description}</span>
       {!owned && !available && (

@@ -53,7 +53,7 @@ export function ExpansionPanel() {
       <header className={styles.head}>
         <h2 className={styles.title}>{t.expansion.title}</h2>
         <div className={styles.score}>
-          <span className={`${styles.contracts} num`}>{fmt(layer.currency)} ⛨</span>
+          <span className={`${styles.contracts} num`}>{fmt(layer.currency)} <Picto name="contrat" size={20} /></span>
           <span className={styles.scoreLabel}>{t.expansion.inBank}</span>
         </div>
       </header>
@@ -146,7 +146,7 @@ function City({ def }: { def: CityDef }) {
           onClick={() => doUpgradeCity(def.id)}
         >
           {founded ? t.expansion.upgrade : t.expansion.found}
-          <span className={`${styles.cityCost} num`}>{t.expansion.cost(cost)}</span>
+          <span className={`${styles.cityCost} num`} aria-label={t.expansion.cost(cost)}>{cost} <Picto name="contrat" size={14} /></span>
         </button>
       ) : (
         <p className={styles.cityLocked}>

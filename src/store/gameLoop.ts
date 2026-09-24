@@ -250,7 +250,7 @@ export function hardReset(): void {
 function announce(unlocked: AchievementDef[]): void {
   const store = useGameStore.getState();
   for (const def of unlocked) {
-    store.pushToast({ kind: 'achievement', title: t.achievements.toast, text: def.name });
+    store.pushToast({ kind: 'achievement', title: t.achievements.toast, text: def.name, names: [def.name] });
   }
 }
 

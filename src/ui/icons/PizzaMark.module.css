@@ -1,0 +1,9 @@
+/* Les ingrédients du chef sur la pizza héros : trait crème sur la sauce, comme dans
+   l'onglet du chef, un peu plus épais pour tenir à la taille de la pizza. */
+.chef {
+  color: var(--crust);
+}
+
+.chef svg {
+  stroke-width: 2.2;
+}

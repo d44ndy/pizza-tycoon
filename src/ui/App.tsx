@@ -9,7 +9,6 @@ import { useEffect, useRef } from 'react';
 import { t } from '../data/i18n/fr.ts';
 import { GENERATORS } from '../data/generators.ts';
 import { formatTime } from '../engine/format.ts';
-import { OFFLINE_BASE_EFFICIENCY } from '../data/config.ts';
 import { availableUpgrades, upgradesOwnedCount } from '../engine/upgrades.ts';
 import { achievementsOwnedCount } from '../engine/achievements.ts';
 import { canPrestige, expansionLayer, recipeLayer } from '../engine/prestige.ts';
@@ -91,6 +90,13 @@ export function App() {
 
   useKeyboardShortcuts(state.ui.tab, sound);
 
+  // Le stock dans le titre de l'onglet. Le texte formaté ne change qu'à la troisième
+  // décimale significative, donc l'effet ne se déclenche que rarement.
+  const titleAmount = state.pizzas.gt(0) ? fmt(state.pizzas) : null;
+  useEffect(() => {
+    document.title = titleAmount === null ? t.game.title : t.game.documentTitle(titleAmount);
+  }, [titleAmount]);
+
   // Œuf de Pâques : insister sur le sujet qui fâche.
   const titleClicks = useRef(0);
   function pokeTitle() {
@@ -167,7 +173,7 @@ export function App() {
         <Modal title={t.offline.title} actionLabel={t.offline.close} onAction={() => setOffline(null)}>
           <span>{t.offline.away(formatTime(offline.elapsedSeconds))}</span>
           <strong className={styles.offlineGain}>{t.offline.gained(fmt(offline.gained))}</strong>
-          <span>{t.offline.efficiency(Math.round(OFFLINE_BASE_EFFICIENCY * 100))}</span>
+          <span>{t.offline.efficiency(Math.round(offline.efficiency * 100))}</span>
           {offline.capped && <span>{t.offline.capped(formatTime(offline.creditedSeconds))}</span>}
         </Modal>
       )}

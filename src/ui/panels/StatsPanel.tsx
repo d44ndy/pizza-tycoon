@@ -20,7 +20,7 @@ import styles from './StatsPanel.module.css';
 export function StatsPanel() {
   const state = useGameStore((s) => s.state);
   const production = useGameStore((s) => s.production);
-  const { fmt, fmtInt } = useFormat();
+  const { fmt, fmtInt, fmtMult } = useFormat();
 
   const owned = GENERATORS.reduce((sum, def) => sum + state.generators[def.id].owned, 0);
 
@@ -31,10 +31,10 @@ export function StatsPanel() {
     [t.stats.generatorsOwned, fmtInt(owned)],
     [t.stats.upgradesOwned, `${fmtInt(upgradesOwnedCount(state))} / ${UPGRADES.length}`],
     [t.stats.achievementsOwned, `${fmtInt(achievementsOwnedCount(state))} / ${ACHIEVEMENTS.length}`],
-    [t.stats.achievementBonus, `×${achievementMultiplier(state).toNumber().toFixed(2)}`],
+    [t.stats.achievementBonus, fmtMult(achievementMultiplier(state).toNumber())],
     [t.stats.eventsClicked, fmtInt(state.stats.eventsClicked)],
     [t.stats.stars, fmt(recipeLayer(state).currency)],
-    [t.stats.starBonus, `×${starMultiplier(state).toNumber().toFixed(2)}`],
+    [t.stats.starBonus, fmtMult(starMultiplier(state).toNumber())],
     [t.stats.prestigeCount, fmtInt(recipeLayer(state).resets)],
     [t.stats.challengesDone, `${fmtInt(completedCount(state))} / ${CHALLENGES.length}`],
     [t.stats.contracts, fmt(expansionLayer(state).currency)],

@@ -24,6 +24,8 @@ export type OfflineResult = {
   gained: Decimal;
   /** Vrai si le plafond a rogné le gain (message « tu as atteint la limite »). */
   capped: boolean;
+  /** Rendement appliqué (0,5 au départ, davantage avec l'arbre et les villes). */
+  efficiency: number;
 };
 
 /** Rendement hors ligne : 50 % au départ, jusqu'à 100 % via l'arbre de prestige. */
@@ -50,21 +52,37 @@ export function applyElapsed(state: GameState, elapsedSeconds: number, now: numb
       creditedSeconds: 0,
       gained: ZERO,
       capped: false,
+      efficiency: offlineEfficiency(state),
     };
   }
 
   const cap = offlineCapSeconds(state);
+  const efficiency = offlineEfficiency(state);
   const creditedSeconds = Math.min(elapsedSeconds, cap);
-  const gained = totalProduction(state).mul(creditedSeconds).mul(offlineEfficiency(state));
+  const gained = totalProduction(state).mul(creditedSeconds).mul(efficiency);
 
-  const credited = updateUnlocks(addPizzas({ ...state, lastSaved: now }, gained));
+  const credited = updateUnlocks(addPizzas({ ...coolOven(state, elapsedSeconds), lastSaved: now }, gained));
   return {
     state: credited,
     elapsedSeconds,
     creditedSeconds,
     gained,
     capped: elapsedSeconds > cap,
+    efficiency,
   };
+}
+
+/**
+ * Le four du chef refroidit aussi pendant l'absence, et sur TOUTE sa durée (pas
+ * seulement la part plafonnée) : enfourner avant de partir puis retrouver le four
+ * encore chaud le lendemain serait une pénalité pour avoir quitté le jeu.
+ *
+ * On recule l'instant de cuisson plutôt que d'avancer le temps de jeu, qui règle
+ * aussi les pizzas d'or et les statistiques : eux n'ont pas à bouger.
+ */
+function coolOven(state: GameState, elapsedSeconds: number): GameState {
+  if (state.chef.bakedAt === null) return state;
+  return { ...state, chef: { ...state.chef, bakedAt: state.chef.bakedAt - elapsedSeconds } };
 }
 
 /**

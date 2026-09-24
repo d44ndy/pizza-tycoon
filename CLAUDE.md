@@ -100,7 +100,7 @@ src/
     config.ts    TOUTES les constantes d'équilibrage (croissance 1,15, paliers, plafonds…)
     generators.ts les 10 cuisines (coût de base, production de base, picto, texte)
     upgrades.ts  68 améliorations (cuisine, synergie, clic)
-    achievements.ts 82 hauts faits, dont 8 cachés
+    achievements.ts 86 hauts faits, dont 8 cachés
     events.ts    les quatre pizzas d'or et leurs réglages
     prestige.ts  les 28 nœuds de l'arbre et la formule des Étoiles
     challenges.ts les 8 défis : contrainte, objectif, récompense
@@ -132,7 +132,9 @@ tests/        tests Vitest du moteur
    et renvoie 7,999… pour 2³).
 4. **Aucune chaîne visible en dur** dans un composant : tout passe par `data/i18n/fr.ts`.
 5. **Aucune constante d'équilibrage en dur** : tout passe par `data/config.ts`.
-6. **Un seul formateur de nombres** : `format()` de `engine/format.ts`, via le hook `useFormat()`.
+6. **Un seul formateur de nombres** : `engine/format.ts`, via le hook `useFormat()` — `fmt` pour
+   les quantités, `fmtInt` pour les compteurs, `fmtDec` / `fmtMult` pour les décimales et les
+   multiplicateurs (« ×1,36 »). Jamais de `toFixed()` dans l'interface : il écrit « 1.36 ».
 7. **Les événements se règlent sur le temps de JEU** (`stats.playTimeTotal`), jamais sur
    l'horloge système : c'est ce qui garde `tick()` déterministe et rejouable par le simulateur.
 8. **`core.ts` existe pour casser un cycle d'imports** : `tick.ts` a besoin des actions
@@ -273,6 +275,9 @@ place l'ouverture de la couche 2 autour de 2 à 4 jours, comme prévu au cahier 
 - **Refaire l'arbre** (`prestige.respecTree`) : rend toutes les Étoiles investies, au prix d'une
   remise à zéro de la partie — sans ce prix, on basculerait vers les nœuds hors ligne avant
   chaque départ, et personne ne devrait se sentir obligé de le faire.
+- **Le stock dans le titre de l'onglet** du navigateur (« 148 Md pizzas · Pizza Tycoon »).
+- **Les hauts faits simultanés partagent une notification** (« 33 hauts faits ! ») au lieu
+  d'empiler une colonne qui masque l'écran ; trois notifications au plus à la fois.
 - **Raccourcis** : Espace, 1…0, B, U. Ils se taisent dans un champ de saisie, quand une fenêtre
   de confirmation est ouverte, et ignorent la répétition de touche (pas d'auto-clic déguisé).
 
@@ -292,6 +297,13 @@ Les trois totaux se convertissent en effets permanents, agrégés comme tout le 
 - **Le four ne se rallume qu'une heure de JEU** après une fournée. Sans ce délai, on
   referait sa garniture toutes les cinq minutes selon qu'on clique ou qu'on s'absente :
   une corvée d'optimisation, pas un choix.
+- **Le four refroidit aussi pendant l'absence** (`offline.coolOven`), sur toute sa durée :
+  on recule l'instant de cuisson plutôt que d'avancer le temps de jeu, qui règle aussi
+  les pizzas d'or et les statistiques.
+- **La pizza au four garnit la pizza héros** (`PizzaMark`, prop `toppings`) : le mini-jeu se
+  voit depuis l'écran principal.
+- **Quatre hauts faits** : la première fournée, puis les trois records ci-dessous (condition
+  `chefBaked`). Les descriptions donnent le score à battre, jamais la garniture.
 - **Les ingrédients se découvrent** avec leur cuisine (Pizzeria, Franchise, Usine, Robot)
   et ne se reperdent jamais — ni au prestige, ni à la transcendance. C'est une recette,
   pas un stock.
@@ -341,7 +353,7 @@ service worker enregistré sur le bon scope, sauvegarde locale fonctionnelle.
 |---|---|---|
 | 0 | Choix du thème | ✅ Empire de la Pizza |
 | 1 | MVP : moteur, 10 cuisines, achat groupé, paliers, sauvegarde, hors ligne | ✅ |
-| 2 | Améliorations, synergies, pizzas d'or, 82 hauts faits, simulateur, direction visuelle | ✅ |
+| 2 | Améliorations, synergies, pizzas d'or, 82 hauts faits (86 aujourd'hui), simulateur, direction visuelle | ✅ |
 | 3 | Prestige « Recette Secrète » (⭐ Étoiles), arbre de compétences, automatisation | ✅ |
 | 4 | 8 défis + récompenses | ✅ |
 | 5 | Prestige couche 2 « Expansion Mondiale » (villes), PWA, sons, déploiement GitHub Pages | ✅ |
