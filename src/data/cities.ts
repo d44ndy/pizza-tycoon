@@ -14,8 +14,10 @@ import { D, type Decimal } from '../engine/decimal.ts';
  * Valeur choisie après mesure : avec 1e15, la première transcendance ne rapportait
  * qu'UN Contrat en échange de deux jours de jeu — personne n'accepterait ce marché.
  * À 2e12, le premier grand saut en rapporte une poignée, de quoi ouvrir deux villes.
+ * Passé à 2e13 avec La Pizza du Chef et le carnet ×2 : sans ça, le premier Contrat
+ * tombait à 2 h 36 de jeu actif au lieu de ~6 h.
  */
-export const CONTRACT_DIVISOR = 2e12;
+export const CONTRACT_DIVISOR = 2e13;
 
 /** Cumul de pizzas (toutes runs) à partir duquel l'onglet Expansion se dévoile. */
 export const EXPANSION_REVEAL = D('5e11');

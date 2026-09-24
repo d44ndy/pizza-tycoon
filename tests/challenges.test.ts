@@ -181,8 +181,8 @@ describe('validation et récompenses', () => {
         layers: { ...base.prestige.layers, recipe: { currency: D(0), totalEarned: D(20), resets: 3, nodes: { carnet: 1 } } },
       },
     };
-    // 1,2 (Petit joueur) × 1,3 (Pâte pure) × 1,1 (carnet du chef)
-    expect(permanentEffects(withBoth).globalMult.toNumber()).toBeCloseTo(1.2 * 1.3 * 1.1, 9);
+    // 1,2 (Petit joueur) × 1,3 (Pâte pure) × 2 (carnet du chef)
+    expect(permanentEffects(withBoth).globalMult.toNumber()).toBeCloseTo(1.2 * 1.3 * 2, 9);
   });
 
   it('« Bricolage » rend les améliorations 20 % moins chères', () => {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createTestState, type GameState } from '../src/engine/state.ts';
 import type { ToppingId } from '../src/data/toppings.ts';
-import { CHEF_BAKE_COOLDOWN } from '../src/data/config.ts';
+import { CHEF_BAKE_COOLDOWN, CHEF_PERCENT_PER_POINT } from '../src/data/config.ts';
 import {
   bakeCooldown, bakePizza, canBake, chefEffects, chefUnlocked, clearDraft, copyBakedToDraft,
   effectsFromTotals, evaluatePizza, placeTopping, revealToppings,
@@ -96,10 +96,10 @@ describe('La Pizza du Chef — les règles', () => {
 });
 
 describe('La Pizza du Chef — les effets', () => {
-  it('convertit un point en un pour cent, la moitié pour les pizzas d’or', () => {
+  it('convertit les points selon CHEF_PERCENT_PER_POINT, deux points = 1 % pour les pizzas d’or', () => {
     const effects = effectsFromTotals({ prod: 80, click: 160, gold: 24 });
-    expect(effects.production).toBeCloseTo(1.8);
-    expect(effects.click).toBeCloseTo(2.6);
+    expect(effects.production).toBeCloseTo(1 + 0.8 * CHEF_PERCENT_PER_POINT);
+    expect(effects.click).toBeCloseTo(1 + 1.6 * CHEF_PERCENT_PER_POINT);
     expect(effects.eventFrequency).toBeCloseTo(0.88);
   });
 
@@ -124,10 +124,10 @@ describe('La Pizza du Chef — les effets', () => {
     const before = { production: totalProduction(base), click: clickPower(base) };
 
     const baked: GameState = { ...base, chef: { ...base.chef, baked: layout('BTBTBTBT'), bakedAt: 0 } };
-    expect(totalProduction(baked).div(before.production).toNumber()).toBeCloseTo(1.8);
+    expect(totalProduction(baked).div(before.production).toNumber()).toBeCloseTo(1 + 0.8 * CHEF_PERCENT_PER_POINT);
     // Le clic profite de la production ET de son propre multiplicateur : ici, seulement
     // la production, puisque la margherita ne donne pas de pétrissage.
-    expect(clickPower(baked).div(before.click).toNumber()).toBeCloseTo(1.8);
+    expect(clickPower(baked).div(before.click).toNumber()).toBeCloseTo(1 + 0.8 * CHEF_PERCENT_PER_POINT);
   });
 });
 

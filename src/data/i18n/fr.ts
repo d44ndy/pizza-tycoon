@@ -99,6 +99,9 @@ export const fr = {
     resets: 'Recettes secrètes',
     pending: (stars: string) => `+${stars} si tu recommences maintenant`,
     pendingNone: 'Pas encore assez pour une nouvelle recette',
+    /** Aperçu : ce que les Étoiles de ce prestige permettraient de s'offrir dans l'arbre. */
+    previewTitle: 'De quoi t’offrir ensuite :',
+    previewNothing: 'Rien de neuf dans l’arbre avec ces Étoiles : elles iraient en réserve (+2 % chacune).',
     progress: (current: string, needed: string) => `${current} / ${needed} pizzas cumulées`,
     bonus: (percent: string) => `Chaque Étoile en réserve donne +${percent} % de production`,
     multiplier: (value: string) => `Production ×${value} grâce à tes Étoiles`,

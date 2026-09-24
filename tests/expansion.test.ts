@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { D } from '../src/engine/decimal.ts';
 import { createTestState, type GameState } from '../src/engine/state.ts';
-import { CITIES, CITIES_BY_ID, CITY_CAPS } from '../src/data/cities.ts';
+import { CITIES, CITIES_BY_ID, CITY_CAPS, CONTRACT_DIVISOR } from '../src/data/cities.ts';
 import {
   canTranscend, canUpgradeCity, cityUpgradeCost, contractsFromTotal, doTranscend,
   expansionRevealed, isCityAvailable, isFounded, pendingContracts, totalCityLevels, upgradeCity,
@@ -13,7 +13,7 @@ import { buyUpgrade } from '../src/engine/upgrades.ts';
 import { deserialize, serialize } from '../src/engine/save.ts';
 
 /** Joueur de fin de couche 1 : Étoiles, arbre, défis, gros cumul. */
-function veteran(earnedTotal = '2e15'): GameState {
+function veteran(earnedTotal: string = String(CONTRACT_DIVISOR * 1e3)): GameState {
   const base = createTestState();
   const withGen = {
     ...base,
@@ -47,14 +47,14 @@ function withContracts(state: GameState, contracts: number, cities: Record<strin
 
 describe('Contrats', () => {
   it('suit la racine cubique du cumul divisé par le diviseur', () => {
-    expect(contractsFromTotal(D('1e12')).toNumber()).toBe(0);
-    expect(contractsFromTotal(D('2e12')).toNumber()).toBe(1);
-    expect(contractsFromTotal(D('1.6e13')).toNumber()).toBe(2);
-    expect(contractsFromTotal(D('2e15')).toNumber()).toBe(10);
+    expect(contractsFromTotal(D(CONTRACT_DIVISOR / 2)).toNumber()).toBe(0);
+    expect(contractsFromTotal(D(CONTRACT_DIVISOR)).toNumber()).toBe(1);
+    expect(contractsFromTotal(D(CONTRACT_DIVISOR * 8)).toNumber()).toBe(2);
+    expect(contractsFromTotal(D(CONTRACT_DIVISOR * 1e3)).toNumber()).toBe(10);
   });
 
   it('ne compte que ce qui n’a pas déjà été encaissé', () => {
-    const state = veteran('2e15');
+    const state = veteran(String(CONTRACT_DIVISOR * 1e3));
     expect(pendingContracts(state).toNumber()).toBe(10);
     const after = doTranscend(state).state;
     expect(pendingContracts(after).toNumber()).toBe(0);
@@ -69,7 +69,7 @@ describe('Contrats', () => {
 
 describe('transcendance', () => {
   it('efface la couche 1 et garde ce qui doit l’être', () => {
-    const before = withContracts(veteran('2e15'), 0, { naples: 2 });
+    const before = withContracts(veteran(String(CONTRACT_DIVISOR * 1e3)), 0, { naples: 2 });
     const { state, gained } = doTranscend(before);
 
     expect(gained.toNumber()).toBe(10);
@@ -98,7 +98,7 @@ describe('transcendance', () => {
   });
 
   it('interrompt un défi en cours', () => {
-    const state = { ...veteran('2e15'), challenges: { active: 'inflation', completed: {} } };
+    const state = { ...veteran(String(CONTRACT_DIVISOR * 1e3)), challenges: { active: 'inflation', completed: {} } };
     expect(doTranscend(state).state.challenges.active).toBeNull();
   });
 });
@@ -143,7 +143,7 @@ describe('villes', () => {
   });
 
   it('continuent de produire après une transcendance', () => {
-    const before = withContracts(veteran('2e15'), 0, { naples: 5 });
+    const before = withContracts(veteran(String(CONTRACT_DIVISOR * 1e3)), 0, { naples: 5 });
     const after = doTranscend(before).state;
     expect(after.generators.apprenti.owned).toBe(0);
     expect(cityProduction(after).gt(0)).toBe(true);

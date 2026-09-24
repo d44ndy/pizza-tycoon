@@ -12,7 +12,7 @@
  */
 import type { GameState } from './state.ts';
 import { TOPPINGS, TOPPINGS_BY_ID, type ToppingId, type ToppingStat } from '../data/toppings.ts';
-import { CHEF_BAKE_COOLDOWN, CHEF_GOLD_CAP, CHEF_SLICES } from '../data/config.ts';
+import { CHEF_BAKE_COOLDOWN, CHEF_GOLD_CAP, CHEF_PERCENT_PER_POINT, CHEF_SLICES } from '../data/config.ts';
 
 /** Une garniture : une case par part, `null` pour une part nue. */
 export type Layout = readonly (ToppingId | null)[];
@@ -172,8 +172,8 @@ export const NO_CHEF_EFFECTS: ChefEffects = {
 export function effectsFromTotals(totals: PizzaTotals): ChefEffects {
   const goldPercent = Math.min(CHEF_GOLD_CAP, totals.gold / 2);
   return {
-    production: 1 + totals.prod / 100,
-    click: 1 + totals.click / 100,
+    production: 1 + (totals.prod * CHEF_PERCENT_PER_POINT) / 100,
+    click: 1 + (totals.click * CHEF_PERCENT_PER_POINT) / 100,
     eventFrequency: 1 - goldPercent / 100,
     totals,
   };

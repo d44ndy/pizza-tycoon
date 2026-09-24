@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { t } from '../../data/i18n/fr.ts';
 import { GENERATORS_BY_ID } from '../../data/generators.ts';
 import { TOPPINGS, TOPPINGS_BY_ID, type ToppingId, type ToppingStat } from '../../data/toppings.ts';
-import { CHEF_GOLD_CAP, CHEF_SLICES } from '../../data/config.ts';
+import { CHEF_SLICES } from '../../data/config.ts';
 import {
   bakeCooldown, canBake, chefEffects, effectsFromTotals, evaluatePizza,
   neighbours, opposite, type PizzaEval,
@@ -255,10 +255,12 @@ export function ChefPanel() {
 /** Une des trois colonnes de totaux, avec l'effet en jeu qu'elle représente. */
 function Total({ stat, value }: { stat: ToppingStat; value: number }) {
   const rounded = Math.round(value);
-  // Les pizzas d'or convertissent deux points en un pour cent, et plafonnent.
-  const effect = stat === 'prod' ? t.chef.effect.prod(String(rounded))
-    : stat === 'click' ? t.chef.effect.click(String(rounded))
-      : t.chef.effect.gold(String(Math.round(Math.min(CHEF_GOLD_CAP, value / 2))));
+  // La conversion en effet vit dans le moteur (effectsFromTotals), pas ici : un seul
+  // endroit à régler si l'équilibrage change.
+  const effects = effectsFromTotals({ prod: stat === 'prod' ? value : 0, click: stat === 'click' ? value : 0, gold: stat === 'gold' ? value : 0 });
+  const effect = stat === 'prod' ? t.chef.effect.prod(String(Math.round((effects.production - 1) * 100)))
+    : stat === 'click' ? t.chef.effect.click(String(Math.round((effects.click - 1) * 100)))
+      : t.chef.effect.gold(String(Math.round((1 - effects.eventFrequency) * 100)));
   return (
     <div className={`${styles.total} ${STAT_CLASS[stat]}`}>
       <span className={styles.totalLabel}>{t.chef.stat[stat]}</span>

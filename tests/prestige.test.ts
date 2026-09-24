@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { STAR_DIVISOR } from '../src/data/prestige.ts';
 import { D } from '../src/engine/decimal.ts';
 import { createTestState, type GameState } from '../src/engine/state.ts';
 import {
@@ -13,7 +14,7 @@ import { runFor } from '../src/engine/tick.ts';
 import { GENERATORS_BY_ID } from '../src/data/generators.ts';
 
 /** Partie avancée : du cumul, des cuisines, une amélioration. */
-function advanced(earnedTotal = '1e12'): GameState {
+function advanced(earnedTotal: string = String(STAR_DIVISOR * 1e3)): GameState {
   const base = createTestState();
   const withGen = {
     ...base,
@@ -47,21 +48,21 @@ function withStars(
 }
 
 describe('calcul des Étoiles', () => {
-  it('suit la racine cubique du cumul divisé par 1e9', () => {
+  it('suit la racine cubique du cumul divisé par le diviseur', () => {
     expect(starsFromTotal(D(0)).toNumber()).toBe(0);
     expect(starsFromTotal(D('9.9e8')).toNumber()).toBe(0);
-    expect(starsFromTotal(D('1e9')).toNumber()).toBe(1);
-    expect(starsFromTotal(D('8e9')).toNumber()).toBe(2);
-    expect(starsFromTotal(D('1e12')).toNumber()).toBe(10);
-    expect(starsFromTotal(D('1e15')).toNumber()).toBe(100);
+    expect(starsFromTotal(D(STAR_DIVISOR)).toNumber()).toBe(1);
+    expect(starsFromTotal(D(STAR_DIVISOR * 8)).toNumber()).toBe(2);
+    expect(starsFromTotal(D(STAR_DIVISOR * 1e3)).toNumber()).toBe(10);
+    expect(starsFromTotal(D(STAR_DIVISOR * 1e6)).toNumber()).toBe(100);
   });
 
   it('reste juste sur des nombres énormes', () => {
-    expect(starsFromTotal(D('1e60')).toNumber()).toBeCloseTo(1e17, -12);
+    expect(starsFromTotal(D(STAR_DIVISOR).mul('1e51')).toNumber()).toBeCloseTo(1e17, -12);
   });
 
   it('ne compte que les Étoiles pas encore encaissées', () => {
-    const state = advanced('1e12');
+    const state = advanced(String(STAR_DIVISOR * 1e3));
     expect(pendingStars(state).toNumber()).toBe(10);
     const after = doPrestige(state).state;
     expect(pendingStars(after).toNumber()).toBe(0);
@@ -70,13 +71,13 @@ describe('calcul des Étoiles', () => {
 
   it('interdit le prestige en dessous d’une Étoile', () => {
     expect(canPrestige(advanced('5e8'))).toBe(false);
-    expect(canPrestige(advanced('1e9'))).toBe(true);
+    expect(canPrestige(advanced(String(STAR_DIVISOR)))).toBe(true);
   });
 });
 
 describe('remise à zéro', () => {
   it('efface la partie mais garde l’essentiel', () => {
-    const before = { ...advanced('1e12'), achievements: { 'stock-1': 5 }, flags: { jackpot: true as const } };
+    const before = { ...advanced(String(STAR_DIVISOR * 1e3)), achievements: { 'stock-1': 5 }, flags: { jackpot: true as const } };
     const { state, gained } = doPrestige(before);
 
     expect(gained.toNumber()).toBe(10);
@@ -103,7 +104,7 @@ describe('remise à zéro', () => {
   });
 
   it('offre les cuisines de départ achetées dans l’arbre', () => {
-    const state = withStars(advanced('1e12'), 50, { carnet: 1, 'apprenti-motive': 1, 'mise-de-depart': 1 }, 0);
+    const state = withStars(advanced(String(STAR_DIVISOR * 1e3)), 50, { carnet: 1, 'apprenti-motive': 1, 'mise-de-depart': 1 }, 0);
     const after = doPrestige(state).state;
     expect(after.generators.apprenti.owned).toBe(10);
     expect(after.generators.apprenti.unlocked).toBe(true);
@@ -116,7 +117,7 @@ describe('remise à zéro', () => {
 
     for (let run = 1; run <= 3; run++) {
       // On simule une run en créditant du cumul, comme le ferait le jeu.
-      const cumul = D('1e9').mul(Math.pow(run * 10, 3));
+      const cumul = D(STAR_DIVISOR).mul(Math.pow(run * 10, 3));
       state = { ...state, stats: { ...state.stats, earnedPrestige: cumul, earnedTotal: cumul } };
       expect(canPrestige(state)).toBe(true);
 
@@ -179,9 +180,9 @@ describe('effets de l’arbre', () => {
   it('multiplie la production et le pétrissage', () => {
     const base = advanced();
     const avec = withStars(base, 0, { carnet: 1, 'pate-mere': 1 });
-    expect(totalProduction(avec).toNumber()).toBeCloseTo(totalProduction(base).toNumber() * 1.1 * 1.25, 6);
+    expect(totalProduction(avec).toNumber()).toBeCloseTo(totalProduction(base).toNumber() * 2 * 1.25, 6);
     const clic = withStars(base, 0, { carnet: 1, 'bras-muscles': 1 });
-    expect(clickPower(clic).toNumber()).toBeCloseTo(clickPower(base).toNumber() * 1.1 * 3, 6);
+    expect(clickPower(clic).toNumber()).toBeCloseTo(clickPower(base).toNumber() * 2 * 3, 6);
   });
 
   it('réduit le coût des cuisines', () => {
@@ -232,5 +233,19 @@ describe('automatisation', () => {
     const state = advanced();
     const after = runFor(state, 10, 1);
     expect(after.stats.clicksTotal).toBe(state.stats.clicksTotal);
+  });
+});
+
+describe('aperçu du prestige', () => {
+  it('annonce ce que les Étoiles d’un prestige immédiat permettraient d’acheter', async () => {
+    const { nodesAffordableAfterPrestige } = await import('../src/engine/prestige.ts');
+    const { D } = await import('../src/engine/decimal.ts');
+    const { createTestState } = await import('../src/engine/state.ts');
+    const base = createTestState();
+    // Un diviseur de pizzas cumulées = 1 Étoile en attente : de quoi s'offrir le carnet, et rien d'autre.
+    const first = { ...base, stats: { ...base.stats, earnedPrestige: D(STAR_DIVISOR) } };
+    expect(nodesAffordableAfterPrestige(first).map((n) => n.id)).toEqual(['carnet']);
+    // Sans Étoile en attente ni en réserve, rien.
+    expect(nodesAffordableAfterPrestige(base)).toEqual([]);
   });
 });

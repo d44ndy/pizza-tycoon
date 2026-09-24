@@ -12,7 +12,7 @@ Thème : de l'apprenti pizzaïolo dans un garage au four à plasma orbital.
 | `npm run test:watch` | tests en mode surveillance |
 | `npm run typecheck` | vérification TypeScript seule |
 | `npm run build` | typecheck + build de production dans `dist/` |
-| `npm run sim` | simulateur d'équilibrage (options : `--hours`, `--clicks`, `--click-minutes`, `--no-events`, `--seed`) |
+| `npm run sim` | simulateur d'équilibrage (options : `--hours`, `--step`, `--clicks`, `--click-minutes`, `--no-events`, `--no-chef`, `--challenges`, `--seed`) |
 | `npm run preview` | sert le build de production |
 | `npm run deploy` | publie `dist/` sur la branche `gh-pages` (voir README) |
 
@@ -167,17 +167,33 @@ plusieurs semaines, choix assumé**. Ce sont les prestiges, pas la première par
 qui donnent accès au haut du tableau.
 
 `npm run sim` rejoue le moteur sans interface avec une stratégie gloutonne et affiche
-le temps de chaque jalon, l'écart au jalon précédent et les murs (> 3× le précédent).
-Les repères du doc y sont affichés pour information, sans verdict.
+le temps de chaque jalon, l'écart au jalon précédent et les murs (> 3× le précédent),
+puis le **rebond de chaque prestige** (voir plus bas). Les repères du doc y sont
+affichés pour information, sans verdict.
 
-Mesures actuelles (joueur actif, 3 clics/s) :
+Le joueur simulé joue comme un humain qui lit l'écran, pas comme un robot :
+- il achète ce qui rapporte le plus de production par pizza dépensée ;
+- il enfourne la meilleure des trois championnes du chef qu'il connaît, mais attend
+  10 min après un prestige (juste après, seul le pétrissage rapporte, et il se
+  retrouverait coincé une heure avec la mauvaise pizza) ;
+- il dépense ses Étoiles dans le nœud qui rapporte le plus **par Étoile**, jugé sur
+  l'économie qu'il va reconstruire, et garde ses Étoiles (+2 % chacune) si aucun nœud
+  ne fait mieux ;
+- il prestige quand le gain double ses Étoiles **et** que ces Étoiles achètent un nœud
+  qui vaut le coup — c'est ce qu'affiche l'aperçu sous « Brûler la recette » ;
+- en profil idle (`--click-minutes`), il pétrit au début de CHAQUE partie, sinon il ne
+  pourrait jamais racheter son premier apprenti après un prestige.
+
+Mesures actuelles (joueur actif, 3 clics/s, pizzas d'or attrapées) :
 
 | Jalon | Mesuré |
 |---|---|
-| 1re Étoile (prestige possible) | 56 min |
-| Robot pizzaïolo débloqué (8e) | 1 h 27 |
-| Drone-livreur débloqué (9e) | 3 h 06 |
-| Four à plasma (10e) | hors d'atteinte en première partie, comme prévu |
+| Première fournée du chef | 14 min |
+| 1re Étoile (prestige possible) | 55 min (idle : 1 h 00) |
+| Robot pizzaïolo débloqué (8e) | 1 h 19 (2e partie) |
+| Drone-livreur débloqué (9e) | 2 h 25 (2e partie) |
+| Four à plasma (10e) | 4 h 32, en 4e partie ; hors d'atteinte avant le premier prestige |
+| 1er Contrat mérité | 5 h 49 (idle : 6 h 31) |
 
 Deux comportements volontaires, qui ne sont pas des bugs :
 - les améliorations de cuisine arrivent à 1, 5, 25, 50 et 100 exemplaires, donc sur les
@@ -188,7 +204,7 @@ Deux comportements volontaires, qui ne sont pas des bugs :
 
 ### Prestige — « Recette Secrète »
 
-Étoiles gagnées = `floor(cbrt(pizzas cumulées depuis la dernière transcendance / 1e9))`,
+Étoiles gagnées = `floor(cbrt(pizzas cumulées depuis la dernière transcendance / 2e9))`,
 moins celles déjà encaissées. Chaque Étoile **non dépensée** donne +2 % de production
 (jusqu'à +5 % avec l'arbre).
 
@@ -201,9 +217,27 @@ moins celles déjà encaissées. Chaque Étoile **non dépensée** donne +2 % de
   ligne, plafond, bonus par Étoile) prennent le MEILLEUR — acheter la version supérieure
   remplace la précédente au lieu de s'y ajouter.
 
-Rythme mesuré au simulateur (joueur actif, `--hours 48`) : prestiges à 52 min, 1 h 46,
-3 h 15, 6 h 07, 11 h 35, 21 h 48 et 1 j 12 h ; 12 nœuds sur 28 et 10e cuisine achetée
-à 16 h 38 de jeu cumulé.
+Rythme mesuré au simulateur (joueur actif, `--hours 168 --step 30`) : prestiges à 47 min,
+1 h 26, 2 h 35, 8 h 55, 16 h 51, 1 j 1 h et 1 j 11 h ; au bout de 7 jours, **7 nœuds sur 28**,
+8 transcendances et 21 niveaux de ville. Le rythme « plusieurs semaines » tient : l'ancien
+réglage donnait 6 nœuds et 14 niveaux de ville sur la même semaine.
+
+**Le rebond : un prestige doit se sentir.** Le simulateur mesure, pour chaque prestige,
+le temps qu'il faut pour reproduire la run qu'on vient de brûler, rapporté à sa durée.
+À 100 %, le prestige n'a rien apporté ; à 50 %, il a divisé le temps par deux. Mesures
+sans pizzas d'or (elles ajoutent trop de hasard) :
+
+| Prestige | Avant (carnet ×1,1) | Maintenant (carnet ×2) |
+|---|---|---|
+| 1er | 62 % | **39 %** |
+| 2e | 95 % | 77 % |
+| 3e | 98 % | 64 % |
+
+Pour que le premier prestige compte, le carnet (1 Étoile) est passé de ×1,1 à ×2. Pour ne
+pas accélérer toute la partie en échange, le diviseur des Étoiles est passé de 1e9 à 2e9 et
+celui des Contrats de 2e12 à 2e13 (mesures sur 7 jours ci-dessus). L'écran de prestige
+affiche aussi ce que les Étoiles permettraient de s'offrir (`nodesAffordableAfterPrestige`) :
+sans cet aperçu, on brûle une heure de partie sans savoir si elle achète quelque chose.
 
 Le simulateur applique la règle du cahier des charges : on prestige quand le gain
 **double le total d'Étoiles déjà gagnées** (pas la banque — sinon, comme l'arbre vide
@@ -240,7 +274,7 @@ donc dans le pire cas possible pour le joueur :
 
 ### Expansion Mondiale — la couche 2
 
-Contrats = `floor(cbrt(cumul de pizzas de TOUTE la partie / 2e12))`, moins ceux déjà
+Contrats = `floor(cbrt(cumul de pizzas de TOUTE la partie / 2e13))`, moins ceux déjà
 signés. Transcender efface **toute la couche 1** — pizzas, cuisines, améliorations,
 Étoiles et arbre — et conserve hauts faits, défis relevés, villes et statistiques globales.
 
@@ -254,15 +288,14 @@ Les Contrats fondent et agrandissent **6 villes**. Une ville :
 Les effets qui dégénéreraient sont plafonnés dans `CITY_CAPS` (coûts, fréquence
 des événements, rendement hors ligne).
 
-Mesures (joueur actif, `--hours 96 --step 10`) : 1er Contrat mérité à **10 h 09**.
-Le simulateur transcende dès qu'il le peut et signe donc 4 Contrats en 4 jours ; un
-joueur avisé attend plutôt une poignée de Contrats (~2 jours de jeu actif) avant de
-tout effacer, puisque la racine cubique récompense la patience. En rythme idle, cela
-place l'ouverture de la couche 2 autour de 2 à 4 jours, comme prévu au cahier des charges.
+Mesures : 1er Contrat mérité à **5 h 49** de jeu actif (6 h 31 en idle). Le simulateur
+transcende dès qu'il le peut ; un joueur avisé attend plutôt une poignée de Contrats avant
+de tout effacer, puisque la racine cubique récompense la patience.
 
 > Le diviseur valait 1e15 dans la première version : la première transcendance ne
 > rapportait alors qu'UN Contrat pour deux jours de jeu effacés. Personne n'aurait
-> accepté ce marché.
+> accepté ce marché. Il est passé à 2e12, puis à 2e13 quand le chef et le carnet ×2
+> ont accéléré le début de partie (le premier Contrat tombait alors à 2 h 36).
 
 ### Confort de jeu
 
@@ -289,8 +322,10 @@ chaque ingrédient a une valeur de base et influence ses **voisines** (i ± 1) o
 elles ne se multiplient — c'est la seule protection contre une combinaison qui s'emballe.
 
 Les trois totaux se convertissent en effets permanents, agrégés comme tout le reste par
-`permanentEffects()` : 1 point de production = +1 % de production, 1 point de pétrissage
-= +1 % au clic, 2 points de pizzas d'or = 1 % de délai en moins (plafonné à 50 %).
+`permanentEffects()` : 1 point de production = +0,5 % de production, 1 point de pétrissage
+= +0,5 % au clic (`CHEF_PERCENT_PER_POINT`), 2 points de pizzas d'or = 1 % de délai en moins
+(plafonné à 50 %). La conversion valait 1 % au départ : la margherita donnait alors +80 %
+dès la 14e minute, autant que trois nœuds d'arbre, et le jeu entier allait ~40 % plus vite.
 
 - **Deux garnitures** cohabitent : `draft` (celle qu'on manipule) et `baked` (celle au four,
   la seule qui donne des bonus). Essayer ne coûte donc jamais rien.
@@ -333,6 +368,16 @@ celles déjà disponibles au chargement comptent comme vues. Désactivable dans 
 Clé `pizza-tycoon-save`, champ `version` (**4**) + table `MIGRATIONS` appliquée en chaîne au chargement.
 Une sauvegarde illisible n'est **jamais** écrasée : elle est recopiée dans
 `pizza-tycoon-save-corrupted` et le jeu propose au joueur de l'exporter.
+
+### Points connus, à trancher
+
+- **L'économie du clic.** En milieu de partie, un clic vaut surtout un pourcentage de la
+  production (améliorations « clickFromProduction », jusqu'à 18 %). Or les multiplicateurs
+  de pétrissage — Bras musclés ×3, Cadence ×5, la pizza du pétrisseur, Tokyo, la frénésie
+  ×777 — ne multiplient que la petite part fixe du clic (`formulas.clickPower`). Ils
+  deviennent presque inutiles passé la première heure. Les appliquer au clic entier
+  demande de réduire leurs valeurs (sinon le clic écrase tout) : c'est une décision de
+  design, pas un correctif.
 
 ## Conventions
 

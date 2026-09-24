@@ -38,6 +38,13 @@ export const OFFLINE_BASE_CAP_SECONDS = 8 * 3600;
 export const CHEF_SLICES = 8;
 export const CHEF_BAKE_COOLDOWN = 3600;
 
+/**
+ * Conversion des points de production et de pétrissage du chef en pourcentage de bonus.
+ * 1 à l'origine : la margherita donnait +80 % dès la 14e minute, soit autant que trois
+ * nœuds d'arbre, et le jeu entier s'accélérait d'environ 40 %. À 0,5 : +40 %.
+ */
+export const CHEF_PERCENT_PER_POINT = 0.5;
+
 /** Plafond de la réduction du délai entre deux pizzas d'or (en %). */
 export const CHEF_GOLD_CAP = 50;
 

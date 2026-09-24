@@ -9,8 +9,12 @@
  */
 import type { GeneratorId } from './generators.ts';
 
-/** Étoiles gagnées = racine cubique du cumul de pizzas divisé par ce diviseur. */
-export const STAR_DIVISOR = 1e9;
+/**
+ * Étoiles gagnées = racine cubique du cumul de pizzas divisé par ce diviseur.
+ * 1e9 à l'origine ; 2e9 depuis que La Pizza du Chef accélère le début de partie :
+ * la première Étoile retombe vers 47 min de jeu actif, au lieu de 27.
+ */
+export const STAR_DIVISOR = 2e9;
 
 /** Bonus de production par Étoile NON dépensée (améliorable dans l'arbre). */
 export const STAR_BASE_BONUS = 0.02;
@@ -71,8 +75,10 @@ export const PRESTIGE_BRANCHES: Record<PrestigeBranch, { name: string; descripti
 
 export const PRESTIGE_TREE: readonly PrestigeNodeDef[] = [
   {
-    id: 'carnet', name: 'Le carnet du chef', description: 'Toute la production ×1,1',
-    cost: 1, branch: 'racine', requires: [], effect: { type: 'globalMult', factor: 1.1 },
+    id: 'carnet', name: 'Le carnet du chef', description: 'Toute la production ×2',
+    // ×1,1 à l'origine : le premier prestige coûtait une heure de partie pour 10 %, et il
+    // fallait 62 % du temps de la run brûlée pour la reproduire. À ×2, il en faut 39 %.
+    cost: 1, branch: 'racine', requires: [], effect: { type: 'globalMult', factor: 2 },
   },
 
   /* --- Le fournil : production et coûts --- */

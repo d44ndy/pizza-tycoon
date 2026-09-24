@@ -268,6 +268,18 @@ export function buyNode(state: GameState, id: string): { state: GameState; bough
   };
 }
 
+/**
+ * Ce qu'un prestige immédiat permettrait d'acheter : les nœuds disponibles dont le prix
+ * tient dans la banque PLUS les Étoiles en attente, les moins chers d'abord.
+ * C'est l'aperçu affiché sous le bouton « Brûler la recette » (et la règle du simulateur).
+ */
+export function nodesAffordableAfterPrestige(state: GameState): PrestigeNodeDef[] {
+  const budget = recipeLayer(state).currency.add(pendingStars(state));
+  return PRESTIGE_TREE
+    .filter((def) => isNodeAvailable(state, def) && budget.gte(def.cost))
+    .sort((a, b) => a.cost - b.cost);
+}
+
 /** Nœuds affichés : acquis, disponibles, ou verrouillés dont un prérequis est acquis. */
 export function visibleNodes(state: GameState): PrestigeNodeDef[] {
   return PRESTIGE_TREE.filter(

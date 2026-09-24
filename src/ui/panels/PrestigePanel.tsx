@@ -10,7 +10,7 @@ import {
   PRESTIGE_BRANCHES, PRESTIGE_TREE, type PrestigeBranch, type PrestigeNodeDef,
 } from '../../data/prestige.ts';
 import {
-  canBuyNode, hasNode, isNodeAvailable, pendingStars, recipeLayer,
+  canBuyNode, hasNode, isNodeAvailable, nodesAffordableAfterPrestige, pendingStars, recipeLayer,
   spentStars, starMultiplier, starsFromTotal, totalForStars, permanentEffects,
 } from '../../engine/prestige.ts';
 import { doBuyNode, doPrestigeNow, doRespec } from '../../store/gameLoop.ts';
@@ -18,6 +18,7 @@ import { useGameStore } from '../../store/gameStore.ts';
 import { Modal } from '../common/Modal.tsx';
 import { ProgressBar } from '../common/ProgressBar.tsx';
 import { Picto } from '../icons/Picto.tsx';
+import type { GameState } from '../../engine/state.ts';
 import { useFormat } from '../useFormat.ts';
 import styles from './PrestigePanel.module.css';
 
@@ -91,6 +92,9 @@ export function PrestigePanel() {
         <span className={styles.pendingLabel}>
           {ready ? t.prestige.pending(fmt(pending)) : t.prestige.pendingNone}
         </span>
+        {/* L'aperçu qui manquait : sans lui, on brûle une heure de partie sans savoir
+            si ces Étoiles achètent quelque chose. */}
+        {ready && <PrestigePreview state={state} />}
         <ProgressBar
           ratio={ratio}
           label={t.prestige.currency}
@@ -203,5 +207,26 @@ function Node({ def }: { def: PrestigeNodeDef }) {
         </span>
       )}
     </button>
+  );
+}
+
+/** Les nœuds qu'un prestige immédiat permettrait d'acheter (trois au plus). */
+function PrestigePreview({ state }: { state: GameState }) {
+  const nodes = nodesAffordableAfterPrestige(state).slice(0, 3);
+  if (nodes.length === 0) return <p className={styles.preview}>{t.prestige.previewNothing}</p>;
+  return (
+    <div className={styles.preview}>
+      <span className={styles.previewTitle}>{t.prestige.previewTitle}</span>
+      <ul className={styles.previewList}>
+        {nodes.map((def) => (
+          <li key={def.id}>
+            <strong>{def.name}</strong> — {def.description}
+            <span className={`${styles.previewCost} num`} aria-label={t.prestige.nodeCost(def.cost)}>
+              {def.cost} <Picto name="etoile" size={12} />
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
