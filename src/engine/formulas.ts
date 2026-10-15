@@ -192,8 +192,14 @@ export function totalProduction(state: GameState): Decimal {
 }
 
 /**
- * Valeur d'un clic : une base multipliée (améliorations de clic, frénésie, hauts faits),
- * à laquelle s'ajoute un pourcentage de la production par seconde.
+ * Valeur d'un clic, en deux temps :
+ * 1. une part fixe (doublée par les améliorations de la boutique, portée par les hauts
+ *    faits), à laquelle s'ajoute un pourcentage de la production par seconde ;
+ * 2. le tout multiplié par les bonus de pétrissage permanents (arbre, défi, Chicago,
+ *    chef) et par le coup de feu.
+ * Passé la première heure, la part fixe ne pèse plus rien : si ces bonus ne touchaient
+ * qu'elle, ils ne serviraient plus à rien. Les améliorations de boutique, elles, ne
+ * doublent que la part fixe — sinon les cinq ×2 écraseraient tout le reste.
  */
 export function clickPower(state: GameState): Decimal {
   // Défi « Zéro clic » : le pétrissage ne rapporte plus rien.
@@ -208,14 +214,12 @@ export function clickPower(state: GameState): Decimal {
     else if (effect.type === 'clickFromProduction') productionPercent += effect.percent;
   }
 
-  const base = D(BASE_CLICK_POWER)
-    .mul(mult)
-    .mul(globalMultiplier(state))
-    .mul(permanentEffects(state).clickMult)
-    .mul(eventClickMultiplier(state));
+  const fixed = D(BASE_CLICK_POWER).mul(mult).mul(globalMultiplier(state));
+  const raw = productionPercent === 0
+    ? fixed
+    : fixed.add(totalProduction(state).mul(productionPercent / 100));
 
-  if (productionPercent === 0) return base;
-  return base.add(totalProduction(state).mul(productionPercent / 100));
+  return raw.mul(permanentEffects(state).clickMult).mul(eventClickMultiplier(state));
 }
 
 /** Un générateur devient visible quand le joueur possède 50 % de son coût actuel. */

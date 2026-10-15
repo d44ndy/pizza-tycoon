@@ -25,8 +25,8 @@ export const EVENTS: readonly EventDef[] = [
     weight: 40, multiplier: 7, duration: 77, negative: false,
   },
   {
-    kind: 'frenzy', name: 'Coup de feu', description: 'Pétrissage ×777 pendant 13 secondes',
-    weight: 25, multiplier: 777, duration: 13, negative: false,
+    kind: 'frenzy', name: 'Coup de feu', description: 'Pétrissage ×77 pendant 13 secondes',
+    weight: 25, multiplier: 77, duration: 13, negative: false,
   },
   {
     kind: 'jackpot', name: 'Pourboire du siècle', description: 'Gain immédiat : 15 minutes de production',

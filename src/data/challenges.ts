@@ -127,10 +127,10 @@ export const CHALLENGES: readonly ChallengeDef[] = [
     id: 'cuisine-froide',
     name: 'Cuisine froide',
     constraint: 'Les cuisines tournent cinq fois moins vite : tout repose sur tes mains',
-    rewardLabel: 'Le pétrissage rapporte 5 fois plus, pour toujours',
+    rewardLabel: 'Le pétrissage rapporte 25 % de plus, pour toujours',
     goal: D('2e6'),
     rules: { productionFactor: 0.2 },
-    reward: { type: 'clickMult', factor: 5 },
+    reward: { type: 'clickMult', factor: 1.25 },
   },
   {
     id: 'pate-pure',

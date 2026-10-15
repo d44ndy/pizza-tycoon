@@ -117,12 +117,12 @@ export const PRESTIGE_TREE: readonly PrestigeNodeDef[] = [
 
   /* --- La salle : pétrissage et pizzas d'or --- */
   {
-    id: 'bras-muscles', name: 'Bras musclés', description: 'Le pétrissage rapporte 3 fois plus',
-    cost: 2, branch: 'salle', requires: ['carnet'], effect: { type: 'clickMult', factor: 3 },
+    id: 'bras-muscles', name: 'Bras musclés', description: 'Le pétrissage rapporte 50 % de plus',
+    cost: 2, branch: 'salle', requires: ['carnet'], effect: { type: 'clickMult', factor: 1.5 },
   },
   {
-    id: 'cadence', name: 'Cadence infernale', description: 'Le pétrissage rapporte 5 fois plus',
-    cost: 10, branch: 'salle', requires: ['bras-muscles'], effect: { type: 'clickMult', factor: 5 },
+    id: 'cadence', name: 'Cadence infernale', description: 'Le pétrissage rapporte 50 % de plus',
+    cost: 10, branch: 'salle', requires: ['bras-muscles'], effect: { type: 'clickMult', factor: 1.5 },
   },
   {
     id: 'bouche-a-oreille', name: 'Bouche à oreille', description: 'Les pizzas d’or arrivent 20 % plus vite',

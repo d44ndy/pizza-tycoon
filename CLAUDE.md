@@ -188,12 +188,12 @@ Mesures actuelles (joueur actif, 3 clics/s, pizzas d'or attrapées) :
 
 | Jalon | Mesuré |
 |---|---|
-| Première fournée du chef | 14 min |
-| 1re Étoile (prestige possible) | 55 min (idle : 1 h 00) |
-| Robot pizzaïolo débloqué (8e) | 1 h 19 (2e partie) |
-| Drone-livreur débloqué (9e) | 2 h 25 (2e partie) |
-| Four à plasma (10e) | 4 h 32, en 4e partie ; hors d'atteinte avant le premier prestige |
-| 1er Contrat mérité | 5 h 49 (idle : 6 h 31) |
+| Première fournée du chef | 22 min |
+| 1re Étoile (prestige possible) | 56 min (idle : 1 h 07) |
+| Robot pizzaïolo débloqué (8e) | 1 h 20 (2e partie) |
+| Drone-livreur débloqué (9e) | 2 h 30 (2e partie) |
+| Four à plasma (10e) | 4 h 37, en 4e partie ; hors d'atteinte avant le premier prestige |
+| 1er Contrat mérité | 6 h 38 (idle : 7 h 12) |
 
 Deux comportements volontaires, qui ne sont pas des bugs :
 - les améliorations de cuisine arrivent à 1, 5, 25, 50 et 100 exemplaires, donc sur les
@@ -218,20 +218,25 @@ moins celles déjà encaissées. Chaque Étoile **non dépensée** donne +2 % de
   remplace la précédente au lieu de s'y ajouter.
 
 Rythme mesuré au simulateur (joueur actif, `--hours 168 --step 30`) : prestiges à 47 min,
-1 h 26, 2 h 35, 8 h 55, 16 h 51, 1 j 1 h et 1 j 11 h ; au bout de 7 jours, **7 nœuds sur 28**,
-8 transcendances et 21 niveaux de ville. Le rythme « plusieurs semaines » tient : l'ancien
-réglage donnait 6 nœuds et 14 niveaux de ville sur la même semaine.
+1 h 26, 2 h 12, 4 h 22, 10 h 09, 17 h 53, 1 j 4 h et 1 j 14 h ; au bout de 7 jours, **9 nœuds
+sur 28**, 9 transcendances et 30 niveaux de ville. Le rythme « plusieurs semaines » tient
+pour l'arbre. Avant que les nœuds de pétrissage ne servent à quelque chose (voir
+« Économie du clic »), la même semaine donnait 7 nœuds, 8 transcendances et 21 niveaux
+de ville.
 
 **Le rebond : un prestige doit se sentir.** Le simulateur mesure, pour chaque prestige,
 le temps qu'il faut pour reproduire la run qu'on vient de brûler, rapporté à sa durée.
 À 100 %, le prestige n'a rien apporté ; à 50 %, il a divisé le temps par deux. Mesures
 sans pizzas d'or (elles ajoutent trop de hasard) :
 
-| Prestige | Avant (carnet ×1,1) | Maintenant (carnet ×2) |
-|---|---|---|
-| 1er | 62 % | **39 %** |
-| 2e | 95 % | 77 % |
-| 3e | 98 % | 64 % |
+| Prestige | Carnet ×1,1 | Carnet ×2 | Maintenant (clic revu) |
+|---|---|---|---|
+| 1er | 62 % | **39 %** | 39 % |
+| 2e | 95 % | 77 % | 77 % |
+| 3e | 98 % | 64 % | 90 % |
+
+Le 3e prestige s'est affaibli quand Bras musclés est devenu rentable : le joueur simulé
+brûle sa partie plus tôt pour ce nœud à 2 Étoiles, au lieu d'attendre Deuxième fournée.
 
 Pour que le premier prestige compte, le carnet (1 Étoile) est passé de ×1,1 à ×2. Pour ne
 pas accélérer toute la partie en échange, le diviseur des Étoiles est passé de 1e9 à 2e9 et
@@ -264,13 +269,13 @@ donc dans le pire cas possible pour le joueur :
 | Défi | Objectif | Terminé en |
 |---|---|---|
 | Zéro clic | 20 M | 26 min |
-| Sans apprenti | 200 M | 36 min |
-| Petit joueur | 500 M | 52 min |
-| Inflation | 30 M | 1 h 00 |
-| Sans livraison | 300 M | 1 h 14 |
-| Cuisine froide | 2 M | 1 h 15 |
-| Bricolage | 30 M | 1 h 17 |
-| Pâte pure | 400 M | 1 h 22 |
+| Sans apprenti | 200 M | 42 min |
+| Petit joueur | 500 M | 56 min |
+| Inflation | 30 M | 1 h 06 |
+| Sans livraison | 300 M | 1 h 16 |
+| Bricolage | 30 M | 1 h 26 |
+| Pâte pure | 400 M | 1 h 27 |
+| Cuisine froide | 2 M | 1 h 33 |
 
 ### Expansion Mondiale — la couche 2
 
@@ -288,7 +293,7 @@ Les Contrats fondent et agrandissent **6 villes**. Une ville :
 Les effets qui dégénéreraient sont plafonnés dans `CITY_CAPS` (coûts, fréquence
 des événements, rendement hors ligne).
 
-Mesures : 1er Contrat mérité à **5 h 49** de jeu actif (6 h 31 en idle). Le simulateur
+Mesures : 1er Contrat mérité à **6 h 38** de jeu actif (7 h 12 en idle). Le simulateur
 transcende dès qu'il le peut ; un joueur avisé attend plutôt une poignée de Contrats avant
 de tout effacer, puisque la racine cubique récompense la patience.
 
@@ -369,15 +374,39 @@ Clé `pizza-tycoon-save`, champ `version` (**4**) + table `MIGRATIONS` appliqué
 Une sauvegarde illisible n'est **jamais** écrasée : elle est recopiée dans
 `pizza-tycoon-save-corrupted` et le jeu propose au joueur de l'exporter.
 
-### Points connus, à trancher
+### Économie du clic
 
-- **L'économie du clic.** En milieu de partie, un clic vaut surtout un pourcentage de la
-  production (améliorations « clickFromProduction », jusqu'à 18 %). Or les multiplicateurs
-  de pétrissage — Bras musclés ×3, Cadence ×5, la pizza du pétrisseur, Tokyo, la frénésie
-  ×777 — ne multiplient que la petite part fixe du clic (`formulas.clickPower`). Ils
-  deviennent presque inutiles passé la première heure. Les appliquer au clic entier
-  demande de réduire leurs valeurs (sinon le clic écrase tout) : c'est une décision de
-  design, pas un correctif.
+Passé la première heure, un clic vaut surtout un pourcentage de la production
+(améliorations « clickFromProduction », jusqu'à 18 %) : dès 1 h 30, la part fixe pèse
+moins de 0,05 % du clic. `formulas.clickPower` calcule donc en deux temps :
+
+1. **part fixe** × les cinq améliorations ×2 de la boutique × `globalMultiplier`,
+   **plus** le pourcentage de production ;
+2. **le tout** × les bonus de pétrissage permanents (`permanentEffects().clickMult` :
+   arbre, défi, Chicago, pizza du chef) × le coup de feu.
+
+Les améliorations de boutique restent sur la part fixe : appliquées au clic entier, leurs
+cinq ×2 (×32) écraseraient tout. Quand les autres bonus ne multipliaient que la part fixe,
+le joueur simulé n'achetait jamais Bras musclés ni Cadence : ils ne rapportaient rien.
+
+Les valeurs ont été réduites pour qu'un joueur actif (3 clics/s) **tout équipé gagne
+environ 2 à 3× un joueur idle** en fin de partie : mesuré à 2,7× sur 7 jours, sans la
+récompense de Cuisine froide que le simulateur ne joue pas. C'était le choix de design :
+cliquer doit nettement valoir le coup, sans que laisser tourner soit puni.
+
+| Bonus | Avant | Maintenant |
+|---|---|---|
+| Bras musclés (arbre, 2 Étoiles) | ×3 | ×1,5 |
+| Cadence infernale (arbre, 10 Étoiles) | ×5 | ×1,5 |
+| Récompense de Cuisine froide | ×5 | ×1,25 |
+| Chicago, par niveau | ×1,5 | ×1,05 |
+| Coup de feu (13 s) | ×777 | ×77 |
+| Pizza du chef (pétrissage) | inchangée, déjà bornée (+80 % au plus) | |
+
+Le prix de ce choix : au tout début, quand la part fixe domine encore, l'ancien ×777 du
+coup de feu accélérait beaucoup. Avec les pizzas d'or, la première fournée du chef passe
+de 14 à 22 min et le premier Contrat de 5 h 49 à 6 h 38. Sans pizzas d'or, le début de
+partie est identique.
 
 ## Conventions
 

@@ -237,20 +237,22 @@ function stars(state: GameState): number {
  * de revenu PAR ÉTOILE d'abord, et seulement s'il rapporte plus que les Étoiles
  * gardées en réserve (+2 % chacune). Un nœud se juge sur l'économie qu'on va
  * reconstruire (celle d'avant le prestige), pas sur la partie toute neuve où seul
- * le pétrissage rapporte encore quelque chose.
+ * le pétrissage rapporte encore quelque chose. Le joueur idle, qui ne pétrit plus à
+ * ce stade de sa partie, juge donc les nœuds sans ses clics.
  */
 function spendStars(state: GameState, reference: GameState): { state: GameState; bought: string[] } {
   let current = state;
   const bought: string[] = [];
   const probe = (s: GameState): GameState => ({ ...reference, prestige: s.prestige });
+  const clicking = reference.stats.playTimeRun < CLICK_MINUTES * 60;
   for (let guard = 0; guard < 30; guard++) {
-    const before = income(probe(current), true).max(1e-9);
+    const before = income(probe(current), clicking).max(1e-9);
     let best: (typeof PRESTIGE_TREE)[number] | null = null;
     let bestScore = 0;
     for (const node of PRESTIGE_TREE) {
       if (!canBuyNode(current, node)) continue;
       // Le revenu « après » tient compte des Étoiles qui quittent la réserve.
-      const gain = income(probe(buyNode(current, node.id).state), true).div(before).toNumber();
+      const gain = income(probe(buyNode(current, node.id).state), clicking).div(before).toNumber();
       const score = Math.log(gain) / node.cost;
       if (score > bestScore + 1e-9) {
         best = node;

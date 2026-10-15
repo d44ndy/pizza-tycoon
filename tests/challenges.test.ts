@@ -166,9 +166,9 @@ describe('validation et récompenses', () => {
 
   it('la récompense est permanente et survit à la sortie', () => {
     const state = { ...veteran(), challenges: { active: null, completed: { 'cuisine-froide': 10 } } };
-    // « Cuisine froide » offre un pétrissage ×5.
-    expect(permanentEffects(state).clickMult.toNumber()).toBe(5);
-    expect(clickPower(state).toNumber()).toBeCloseTo(clickPower(veteran()).toNumber() * 5, 6);
+    // « Cuisine froide » offre un pétrissage ×1,25.
+    expect(permanentEffects(state).clickMult.toNumber()).toBe(1.25);
+    expect(clickPower(state).toNumber()).toBeCloseTo(clickPower(veteran()).toNumber() * 1.25, 6);
   });
 
   it('les récompenses se cumulent avec l’arbre de prestige', () => {

@@ -161,7 +161,7 @@ describe('effets des villes', () => {
   it('Chicago multiplie le pétrissage', () => {
     const sans = withContracts(veteran(), 0, { naples: 1 });
     const avec = withContracts(veteran(), 0, { naples: 1, chicago: 2 });
-    expect(clickPower(avec).toNumber()).toBeCloseTo(clickPower(sans).toNumber() * 1.5 * 1.5, 6);
+    expect(clickPower(avec).toNumber()).toBeCloseTo(clickPower(sans).toNumber() * 1.05 * 1.05, 6);
   });
 
   it('la station orbitale booste toutes les villes', () => {

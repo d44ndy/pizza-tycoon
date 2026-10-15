@@ -69,7 +69,7 @@ export const CITIES: readonly CityDef[] = [
     foundCost: 3,
     levelCost: 2,
     baseProduction: D(1e5),
-    effect: { type: 'clickBoost', factor: 1.5 },
+    effect: { type: 'clickBoost', factor: 1.05 },
   },
   {
     id: 'tokyo',

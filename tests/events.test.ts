@@ -79,10 +79,10 @@ describe('effets', () => {
     expect(buffRemaining(state, 'bonus')).toBeCloseTo(77, 6);
   });
 
-  it('le coup de feu multiplie le clic par 777', () => {
+  it('le coup de feu multiplie le clic par 77', () => {
     const before = clickPower(withPending('frenzy')).toNumber();
     const { state } = catchEvent(withPending('frenzy'));
-    expect(clickPower(state).toNumber()).toBeCloseTo(before * 777, 6);
+    expect(clickPower(state).toNumber()).toBeCloseTo(before * 77, 6);
   });
 
   it('le pourboire vaut 15 minutes de production, plafonné à 15 % du stock', () => {

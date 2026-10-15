@@ -162,7 +162,7 @@ function City({ def }: { def: CityDef }) {
 function cityEffectLabel(def: CityDef): string {
   switch (def.effect.type) {
     case 'kitchenBoost': return `+${def.effect.percent} % de production des cuisines par niveau`;
-    case 'clickBoost': return `Pétrissage ×${def.effect.factor} par niveau`;
+    case 'clickBoost': return `Pétrissage +${Math.round((def.effect.factor - 1) * 100)} % par niveau`;
     case 'cheaperKitchens': return `Cuisines ${def.effect.percent} % moins chères par niveau`;
     case 'fasterEvents': return `Pizzas d’or ${def.effect.percent} % plus fréquentes par niveau`;
     case 'offlineBoost': return `+${def.effect.percent} points de rendement hors ligne par niveau`;

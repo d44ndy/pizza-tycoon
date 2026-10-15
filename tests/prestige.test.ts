@@ -182,7 +182,7 @@ describe('effets de l’arbre', () => {
     const avec = withStars(base, 0, { carnet: 1, 'pate-mere': 1 });
     expect(totalProduction(avec).toNumber()).toBeCloseTo(totalProduction(base).toNumber() * 2 * 1.25, 6);
     const clic = withStars(base, 0, { carnet: 1, 'bras-muscles': 1 });
-    expect(clickPower(clic).toNumber()).toBeCloseTo(clickPower(base).toNumber() * 2 * 3, 6);
+    expect(clickPower(clic).toNumber()).toBeCloseTo(clickPower(base).toNumber() * 2 * 1.5, 6);
   });
 
   it('réduit le coût des cuisines', () => {
